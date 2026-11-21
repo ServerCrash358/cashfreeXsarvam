@@ -14,7 +14,7 @@ Make voice catch a trap (call-back on the vendor's number on file), make approva
 ## v3 additions (priority: P1 call-back, P3 approval)
 - **P1** call-back (unchanged): vendor-master phone only; Bulbul asks for the last four digits; Saaras hears; code compares.
 - **P3** **voice never authorises alone**: spoken read-back and confirmation in the owner's language, then a **PIN tap** bound to the same `bundle_hash` is the authority (single use, short expiry).
-- **P3** second approver (own PIN) above an owner-set amount or when any item came through `CHANGED_ACCOUNT`.
+- **Stretch (cut first):** second approver (own PIN) above an owner-set amount or when any item came through `CHANGED_ACCOUNT`.
 - Explanations are **templates only** (no Sarvam chat model; team rule). Explain from the native extraction; never round-trip translations. Account numbers as last four only.
 - Extra tests: `U-APR-10`, `U-APR-11`.
 
