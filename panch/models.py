@@ -50,7 +50,7 @@ class Invoice:
     total: Optional[Decimal]
     words_amount: Optional[Decimal]
     payee_name: Optional[str]
-    account_number: Optional[str]              # in memory only; never logged
+    account_number: Optional[str] = field(repr=False)  # in memory only; never logged (repr hidden: PR 1)
     ifsc: Optional[str]
     stable: dict[str, bool] = field(default_factory=dict)
     confidence: dict[str, float] = field(default_factory=dict)

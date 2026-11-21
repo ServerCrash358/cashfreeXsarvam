@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import re
 
-from panch.normalise import to_ascii_digits, words_to_amount, _MULT, _word_value
+from panch.normalise import to_ascii_digits
+from panch.normalise.legacy import _MULT, _word_value, words_to_amount  # token parser that accepts mixed digits ("twenty 2 thousand")
 
 DIGIT_WORDS = {
     # English
