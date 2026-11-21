@@ -1,4 +1,4 @@
-"""Panch FastAPI app. Run: .venv/Scripts/python -m uvicorn app.main:app --port 8000"""
+"""TijoriPay FastAPI app. Run: .venv/Scripts/python -m uvicorn app.main:app --port 8000"""
 from __future__ import annotations
 
 import asyncio
@@ -22,7 +22,8 @@ load_dotenv(ROOT / ".env")
 from panch.engine import Engine, _j  # noqa: E402
 from panch import voice  # noqa: E402
 
-engine = Engine(live=True)
+import os  # noqa: E402
+engine = Engine(live=os.getenv("TIJORIPAY_OFFLINE") != "1")   # tests set TIJORIPAY_OFFLINE=1
 
 
 @asynccontextmanager
@@ -39,7 +40,7 @@ async def lifespan(app):
     task.cancel()
 
 
-app = FastAPI(title="Panch", lifespan=lifespan)
+app = FastAPI(title="TijoriPay", lifespan=lifespan)
 
 
 def _plan_view(lang: str):
@@ -73,6 +74,29 @@ def state(lang: str = "en"):
 def reset():
     engine.reset()
     return {"ok": True}
+
+
+UPLOADS = ROOT / "data" / "uploads"
+
+
+@app.post("/api/upload")
+async def upload(files: list[UploadFile] = File(...)):
+    """Curveball intake: invoice images/PDFs -> Sarvam Vision Extract (PR 1, cached by file hash) -> gate."""
+    from panch.reading import read_invoice
+    UPLOADS.mkdir(parents=True, exist_ok=True)
+    results = []
+    for f in files:
+        name = Path(f.filename or "upload").name
+        dest = UPLOADS / name
+        dest.write_bytes(await f.read())
+        try:
+            inv = await asyncio.to_thread(read_invoice, dest)
+            inv_id = engine.add_invoice(inv, name)
+            v = engine.invoice_view(inv_id, engine.cfg["owner_lang"])
+            results.append({"file": name, "id": inv_id, "outcome": v["outcome"], "codes": v["codes"]})
+        except Exception as e:  # a bad read must never take the app down
+            results.append({"file": name, "error": f"{type(e).__name__}: {str(e)[:200]}"})
+    return {"results": results}
 
 
 @app.post("/api/invoices/{inv_id}/callback")

@@ -1,6 +1,6 @@
 {
   "_note": "Synthetic vendor master. Account numbers are Cashfree sandbox test accounts or obviously fake. Never real data.",
-  "buyer": {"name": "Panch Demo Industries", "gstin": "29AAICP2912R1ZR"},
+  "buyer": {"name": "TijoriPay Demo Industries", "gstin": "29AAICP2912R1ZR"},
   "vendors": [
     {"id": "V_MURUGAN", "legal_name": "Sri Murugan Engineering Works", "gstin": "33AAAPM1234C1ZK", "udyam": "UDYAM-TN-02-0012345",
      "enterprise_type": "micro", "msme_rule_applies": true, "agreement_days": null, "recurring": false,

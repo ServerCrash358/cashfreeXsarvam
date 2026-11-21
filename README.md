@@ -1,6 +1,6 @@
-# Panch (working name)
+# TijoriPay
 
-Our build for the Sarvam x Cashfree Buildathon (Bengaluru, 21 Nov 2026), Problem Statement 3: **pay the right bill, to the right person**. Panch reads multilingual invoices (Tamil, Hindi, English; printed and handwritten), pays only what survives deterministic checks, confirms changed bank details by calling the vendor's number on file, plans payments under limited cash and MSME deadlines, takes a replay-proof voice approval, and pays through Cashfree Payouts without ever paying twice.
+Our build for the Sarvam x Cashfree Buildathon (Bengaluru, 21 Nov 2026), Problem Statement 3: **pay the right bill, to the right person**. TijoriPay reads multilingual invoices (Tamil, Hindi, English; printed and handwritten), pays only what survives deterministic checks, confirms changed bank details by calling the vendor's number on file, plans payments under limited cash and MSME deadlines, takes a replay-proof voice approval, and pays through Cashfree Payouts without ever paying twice.
 
 ## Docs (start here)
 

@@ -1,4 +1,4 @@
-"""Panch engine: wires the pure modules to state, Cashfree and Sarvam. One instance per app."""
+"""TijoriPay engine: wires the pure modules to state, Cashfree and Sarvam. One instance per app."""
 from __future__ import annotations
 
 import copy
@@ -26,6 +26,18 @@ from panch.voice import render
 
 ROOT = Path(__file__).resolve().parents[1]
 _lock = threading.RLock()
+
+
+def assess(inv: Invoice, vendors: list[Vendor], history: list[HistoryEntry], verifier, cfg: dict,
+           callback_result: Optional[CheckResult] = None):
+    """The whole gate for one invoice: invariants, duplicates, vendor lane + bank, decision.
+    Returns (lane, vendor or None, Decision). Deterministic given the verifier's answers."""
+    v = find_vendor(inv, vendors)
+    checks = run_invariants(inv, cfg)
+    checks += route_duplicates(inv, history, v.id if v else None, v.recurring if v else False, cfg)
+    lane, vchecks = verify_vendor(inv, v, vendors, verifier, cfg, callback_result)
+    checks += vchecks
+    return lane, v, decide(inv, checks)
 
 
 def _j(v):
@@ -77,6 +89,20 @@ class Engine:
             for inv_id in self.invoices:
                 self.evaluate(inv_id)
 
+    def add_invoice(self, inv: Invoice, filename: str) -> str:
+        """A newly read invoice (live Vision upload or curveball batch) joins the batch and is decided."""
+        with _lock:
+            if inv.id in self.invoices:
+                self.audit.append("intake_duplicate_file", {"file": filename}, entity=inv.id)
+                return inv.id                      # same file twice: one queue keyed by file hash
+            self.invoices[inv.id] = inv
+            self.raw[inv.id] = {"file": filename}
+            self.expected[inv.id] = None
+            self.audit.append("invoice_ingested", {"file": filename, "source_hash": inv.source_hash,
+                                                   "language": inv.language}, entity=inv.id)
+            self.evaluate(inv.id)
+            return inv.id
+
     def vendor(self, vid: Optional[str]) -> Optional[Vendor]:
         return next((v for v in self.vendors if v.id == vid), None)
 
@@ -88,15 +114,8 @@ class Engine:
     def evaluate(self, inv_id: str):
         with _lock:
             inv = self.invoices[inv_id]
-            v = find_vendor(inv, self.vendors)
-            checks = run_invariants(inv, self.cfg)
-            checks += route_duplicates(inv, self.history + self._pending_entries(inv_id), v.id if v else None,
-                                       v.recurring if v else False, self.cfg)
-            lane, vchecks = verify_vendor(inv, v, self.vendors, self.verifier, self.cfg,
-                                          self.callback_results.get(inv_id))
-            checks += vchecks
-            # a confirmed call-back + owner-approved account change clears ACCOUNT_CHANGED (account becomes KNOWN)
-            dec = decide(inv, checks)
+            lane, v, dec = assess(inv, self.vendors, self.history + self._pending_entries(inv_id), self.verifier,
+                                  self.cfg, self.callback_results.get(inv_id))
             prev = self.state.get(inv_id, {})
             self.state[inv_id] = {
                 "lane": lane, "vendor_id": v.id if v else None, "decision": dec,
@@ -268,7 +287,7 @@ class Engine:
                 self.audit.append("beneficiary", {"http": code, "status": body.get("beneficiary_status"),
                                                   "code": body.get("code")}, entity=inv.id)
                 apply_event(att, "SENT", source="api")
-                code, body = self.payouts.transfer(tid, it.amount, it.beneficiary_id, remarks=f"Panch inv {inv.id}")
+                code, body = self.payouts.transfer(tid, it.amount, it.beneficiary_id, remarks=f"TijoriPay inv {inv.id}")
                 self._apply_cf(att, body, "api_response", http=code)
             except TimeoutError as e:
                 apply_event(att, "UNKNOWN", source=f"api {e}")

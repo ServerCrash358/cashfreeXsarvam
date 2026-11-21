@@ -48,7 +48,7 @@ def test_dates():
     assert parse_date("11 नवंबर 2026") == (date(2026, 11, 11), False)
     assert parse_date("9 நவம்பர் 2026") == (date(2026, 11, 9), False)
     assert parse_date("2026-11-12") == (date(2026, 11, 12), False)
-    assert parse_date("05/11/2026") == (date(2026, 11, 5), True)       # ambiguous day/month
+    assert parse_date("05/11/2026")[0] == date(2026, 11, 5)            # PR 1: day-first India default
     assert parse_date("25/11/2026") == (date(2026, 11, 25), False)
     assert parse_date("3rd November 2026") == (date(2026, 11, 3), False)
 
@@ -231,3 +231,13 @@ def test_decide_block_beats_ask():
     inv = type("I", (), {"id": "x"})()
     d = decide(inv, [CheckResult("DUP_FUZZY", False, "ask", {}, "k"), CheckResult("ARITH_TOTAL", False, "block", {}, "k")])
     assert d.outcome == Outcome.BLOCK and d.codes[0] == "ARITH_TOTAL"
+
+
+# ------------------------------------------------------------- eval harness
+def test_eval_harness_scoreboard():
+    from panch.eval import run
+    s = run()["summary"]
+    assert s["traps"] == 20 and s["clean"] == 20
+    assert s["traps_missed_pay"] == 0
+    assert s["clean_false_blocks"] == 0
+    assert s["traps_with_expected_code"] == 20

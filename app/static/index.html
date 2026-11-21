@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Panch</title>
+<title>TijoriPay</title>
 <style>
 :root{--bg:#f6f5f1;--card:#fff;--ink:#1d1b16;--mute:#6b665c;--line:#e4e0d6;--pay:#1f7a4d;--ask:#b26a00;--block:#b3261e;--defer:#4a5fa8;--accent:#2b2a6e}
 *{box-sizing:border-box}body{margin:0;font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Tamil","Noto Sans Devanagari",sans-serif;background:var(--bg);color:var(--ink)}
@@ -36,7 +36,7 @@ input[type=text],input[type=password],input[type=number]{padding:6px 8px;border:
 </head>
 <body>
 <header>
-  <h1>Panch</h1><span class="sub">pay the right bill, to the right person</span>
+  <h1>TijoriPay</h1><span class="sub">pay the right bill, to the right person</span>
   <span class="sp"></span>
   <span id="mode" class="tag" style="color:#fff;border-color:#fff8"></span>
   <label>Owner language <select id="lang"><option value="ta">தமிழ்</option><option value="hi">हिन्दी</option><option value="en">English</option></select></label>
@@ -46,6 +46,7 @@ input[type=text],input[type=password],input[type=number]{padding:6px 8px;border:
 <section>
   <div class="card">
     <h2>This week's bills <span class="mute" id="today"></span></h2>
+    <div class="row2"><input type="file" id="files" multiple accept="image/*,.pdf"><button onclick="uploadFiles()">Read with Sarvam Vision</button><span id="upst" class="mute"></span></div>
     <table><thead><tr><th>#</th><th>Vendor</th><th class="num">Amount ₹</th><th>MSME deadline</th><th>Lane</th><th>Decision</th><th>Payment</th></tr></thead>
     <tbody id="rows"></tbody></table>
   </div>
@@ -150,6 +151,9 @@ function renderScore(){const s=S.scoreboard;
   <div class="kpi"><div class="mute">Clean falsely held</div><div class="v">${s.clean_falsely_held.length}</div><div class="native">false blocks: ${s.clean_false_blocks.length}</div></div></div><p class="mute">${esc(s.claim)}</p>`}
 async function tab(b){document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b));$('score').style.display=b.dataset.t==='score'?'':'none';$('audit').style.display=b.dataset.t==='audit'?'':'none';
   if(b.dataset.t==='audit'){const a=await (await fetch('/api/audit')).json();$('audit').innerHTML=`<p>Hash chain: <b class="${a.chain_ok?'ok':'bad'}">${a.chain_ok?'intact':'BROKEN'}</b> · ${a.entries.length} entries</p><pre class="mono" style="max-height:320px;overflow:auto;white-space:pre-wrap">${esc(a.entries.slice().reverse().map(e=>`#${e.id} ${e.at} ${e.actor} ${e.action} ${e.entity||''} ${JSON.stringify(e.payload)}  ${e.hash.slice(0,10)}`).join('\n'))}</pre>`}}
+async function uploadFiles(){const fs=$('files').files;if(!fs.length){toast('Pick invoice images or PDFs');return}
+  const fd=new FormData();for(const f of fs)fd.append('files',f,f.name);$('upst').textContent='Reading '+fs.length+' file(s)… (20-90 s per job)';
+  try{const r=await post('/api/upload',fd,true);$('upst').textContent=r.results.map(x=>x.error?`${x.file}: ${x.error}`:`${x.file} → ${x.outcome} ${x.codes.join(',')}`).join(' · ');load()}catch(e){$('upst').textContent='Upload failed: '+e.message}}
 async function resetAll(){await post('/api/reset');cbSession=null;sel=null;window._apKey=null;window._dKey=null;$('appr').innerHTML='<p class="mute">Make a plan first.</p>';load()}
 $('lang').onchange=load;load();setInterval(load,2000);
 </script>

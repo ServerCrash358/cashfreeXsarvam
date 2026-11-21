@@ -149,7 +149,7 @@ class PayoutsClient:
         return self._do("GET", "/beneficiary", params={"beneficiary_id": beneficiary_id})
 
     def transfer(self, transfer_id: str, amount, beneficiary_id: str, mode: str = "banktransfer",
-                 remarks: str = "Panch") -> tuple[int, dict]:
+                 remarks: str = "TijoriPay") -> tuple[int, dict]:
         body = {"transfer_id": transfer_id, "transfer_amount": float(amount),  # API takes a JSON number
                 "transfer_mode": mode, "transfer_remarks": remarks[:70],
                 "beneficiary_details": {"beneficiary_id": beneficiary_id}}
