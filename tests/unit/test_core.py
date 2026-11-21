@@ -231,3 +231,13 @@ def test_decide_block_beats_ask():
     inv = type("I", (), {"id": "x"})()
     d = decide(inv, [CheckResult("DUP_FUZZY", False, "ask", {}, "k"), CheckResult("ARITH_TOTAL", False, "block", {}, "k")])
     assert d.outcome == Outcome.BLOCK and d.codes[0] == "ARITH_TOTAL"
+
+
+# ------------------------------------------------------------- eval harness
+def test_eval_harness_scoreboard():
+    from panch.eval import run
+    s = run()["summary"]
+    assert s["traps"] == 20 and s["clean"] == 20
+    assert s["traps_missed_pay"] == 0
+    assert s["clean_false_blocks"] == 0
+    assert s["traps_with_expected_code"] == 20

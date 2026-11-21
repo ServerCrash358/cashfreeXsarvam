@@ -28,6 +28,18 @@ ROOT = Path(__file__).resolve().parents[1]
 _lock = threading.RLock()
 
 
+def assess(inv: Invoice, vendors: list[Vendor], history: list[HistoryEntry], verifier, cfg: dict,
+           callback_result: Optional[CheckResult] = None):
+    """The whole gate for one invoice: invariants, duplicates, vendor lane + bank, decision.
+    Returns (lane, vendor or None, Decision). Deterministic given the verifier's answers."""
+    v = find_vendor(inv, vendors)
+    checks = run_invariants(inv, cfg)
+    checks += route_duplicates(inv, history, v.id if v else None, v.recurring if v else False, cfg)
+    lane, vchecks = verify_vendor(inv, v, vendors, verifier, cfg, callback_result)
+    checks += vchecks
+    return lane, v, decide(inv, checks)
+
+
 def _j(v):
     if isinstance(v, Decimal):
         return str(v)
@@ -88,15 +100,8 @@ class Engine:
     def evaluate(self, inv_id: str):
         with _lock:
             inv = self.invoices[inv_id]
-            v = find_vendor(inv, self.vendors)
-            checks = run_invariants(inv, self.cfg)
-            checks += route_duplicates(inv, self.history + self._pending_entries(inv_id), v.id if v else None,
-                                       v.recurring if v else False, self.cfg)
-            lane, vchecks = verify_vendor(inv, v, self.vendors, self.verifier, self.cfg,
-                                          self.callback_results.get(inv_id))
-            checks += vchecks
-            # a confirmed call-back + owner-approved account change clears ACCOUNT_CHANGED (account becomes KNOWN)
-            dec = decide(inv, checks)
+            lane, v, dec = assess(inv, self.vendors, self.history + self._pending_entries(inv_id), self.verifier,
+                                  self.cfg, self.callback_results.get(inv_id))
             prev = self.state.get(inv_id, {})
             self.state[inv_id] = {
                 "lane": lane, "vendor_id": v.id if v else None, "decision": dec,

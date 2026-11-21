@@ -10,3 +10,4 @@ local.properties
 data/runtime/
 .claude/settings.local.json
 *.pem
+data/eval/
