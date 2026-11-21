@@ -1,0 +1,38 @@
+{
+  "_note": "UI PLACEHOLDER ONLY. Mirrors docs/PLAN.md section 4 so the owner screen can be built and rehearsed before reading (PR 1), checks/decide (PR 2), Cashfree (PR 3) and the planner (Krish) are wired in. Account numbers are Cashfree sandbox test data. Replace with real pipeline output via GET /api/batches/{id}.",
+  "batch_id": "demo",
+  "buyer": "Raghu Hardware",
+  "owner_lang": "ta",
+  "cash_limit": "30000",
+  "vendors": [
+    {"id": "v_murugan", "name": "Sri Murugan Hardware", "language": "ta", "phone_on_file": "+919800000001", "enterprise_type": "micro"},
+    {"id": "v_ganesh", "name": "Ganesh Pipes", "language": "hi", "phone_on_file": "+919800000002", "enterprise_type": "small"},
+    {"id": "v_kaveri", "name": "Kaveri Steel", "language": "en", "phone_on_file": "+919800000003", "enterprise_type": "medium"},
+    {"id": "v_lakshmi", "name": "Lakshmi Electricals", "language": "ta", "phone_on_file": "+919800000004", "enterprise_type": "micro"},
+    {"id": "v_balaji", "name": "Balaji Paints", "language": "hi", "phone_on_file": "+919800000005", "enterprise_type": "small"}
+  ],
+  "invoices": [
+    {"id": "inv_A", "label": "A", "vendor_id": "v_murugan", "amount": "12400", "language": "ta", "outcome": "PAY", "codes": [], "msme_days_left": 3,
+     "beneficiary_id": "ben_murugan", "account_number": "1233943142", "ifsc": "ICIC0000009"},
+    {"id": "inv_B", "label": "B", "vendor_id": "v_ganesh", "amount": "18000", "language": "hi", "outcome": "PAY", "codes": [], "msme_days_left": 5,
+     "beneficiary_id": "ben_ganesh", "account_number": "026291800001191", "ifsc": "YESB0000262"},
+    {"id": "inv_C", "label": "C", "vendor_id": "v_kaveri", "amount": "9600", "language": "en", "outcome": "PAY", "codes": [], "msme_days_left": null,
+     "beneficiary_id": "ben_kaveri", "account_number": "388108022658", "ifsc": "ICIC0000009"},
+    {"id": "inv_D", "label": "D", "vendor_id": "v_ganesh", "amount": "21000", "language": "hi", "outcome": "BLOCK", "codes": ["DUP_EXACT"], "msme_days_left": 5,
+     "beneficiary_id": "ben_ganesh", "account_number": "026291800001191", "ifsc": "YESB0000262"},
+    {"id": "inv_E", "label": "E", "vendor_id": "v_balaji", "amount": "15000", "language": "hi", "outcome": "BLOCK", "codes": ["ARITH_TOTAL"], "msme_days_left": 8,
+     "beneficiary_id": "ben_balaji", "account_number": "00011020001772", "ifsc": "HDFC0000001"},
+    {"id": "inv_F", "label": "F", "vendor_id": "v_lakshmi", "amount": "11000", "language": "ta", "outcome": "ASK", "codes": ["ACCOUNT_CHANGED"], "msme_days_left": 6,
+     "beneficiary_id": "ben_lakshmi_new", "account_number": "000890289871772", "ifsc": "SCBL0036078", "vendor_phone_on_invoice": "+919811111111"},
+    {"id": "inv_G", "label": "G", "vendor_id": "v_balaji", "amount": "5000", "language": "en", "outcome": "BLOCK", "codes": ["NAME_MISMATCH"], "msme_days_left": 8,
+     "beneficiary_id": "ben_balaji_g", "account_number": "1233943142", "ifsc": "ICIC0000009"},
+    {"id": "inv_H", "label": "H", "vendor_id": "v_lakshmi", "amount": "4000", "language": "ta", "outcome": "PAY", "codes": [], "msme_days_left": 1,
+     "beneficiary_id": "ben_lakshmi", "account_number": "7766671735000", "ifsc": "SBIN0000004"}
+  ],
+  "plan": {
+    "bundle": ["inv_H", "inv_B"],
+    "deferred": ["inv_A", "inv_C"],
+    "protected": "22000",
+    "regret": {"naive_edf": ["inv_H", "inv_A", "inv_C"], "naive_paid": "26000", "naive_protected": "16400"}
+  }
+}

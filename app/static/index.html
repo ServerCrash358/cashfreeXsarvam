@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="ta">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Panch</title>
+<style>
+  :root {
+    --bg: #f6f5f1; --panel: #ffffff; --ink: #1d1d1b; --muted: #6b6a65; --line: #e4e2dc;
+    --pay: #1f7a4d; --pay-bg: #e3f3ea; --ask: #9a6400; --ask-bg: #fbf0d9;
+    --block: #b3261e; --block-bg: #fbe4e2; --defer: #4a5a8a; --defer-bg: #e6eaf5;
+    --accent: #2b4c7e; --accent-ink: #fff; --code: #111;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #151513; --panel: #1f1f1c; --ink: #ecebe6; --muted: #a09f98; --line: #33322e;
+      --pay: #6fd19c; --pay-bg: #173826; --ask: #f0c46a; --ask-bg: #3a2e14;
+      --block: #ff8a80; --block-bg: #3d1a18; --defer: #a9b8e8; --defer-bg: #1f2640;
+      --accent: #8fb0e8; --accent-ink: #111; --code: #fff;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 15px/1.45 system-ui, -apple-system, "Segoe UI", "Noto Sans Tamil", "Noto Sans Devanagari", sans-serif; }
+  header { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between;
+           padding: 14px 20px; border-bottom: 1px solid var(--line); background: var(--panel); position: sticky; top: 0; z-index: 2; }
+  header h1 { font-size: 20px; margin: 0; letter-spacing: .3px; }
+  header .sub { color: var(--muted); font-size: 13px; }
+  .langs button { border: 1px solid var(--line); background: transparent; color: var(--ink); padding: 6px 10px; border-radius: 8px; cursor: pointer; }
+  .langs button.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .badge { font-size: 12px; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+  main { max-width: 1180px; margin: 0 auto; padding: 18px 16px 60px; display: grid; gap: 16px;
+         grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+  section h2 { font-size: 15px; margin: 0 0 10px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); }
+  table { width: 100%; border-collapse: collapse; }
+  td, th { text-align: left; padding: 9px 6px; border-top: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 12px; color: var(--muted); font-weight: 600; border-top: 0; }
+  td.amt { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .chip { display: inline-block; font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 6px; letter-spacing: .4px; }
+  .PAY { color: var(--pay); background: var(--pay-bg); } .ASK { color: var(--ask); background: var(--ask-bg); }
+  .BLOCK { color: var(--block); background: var(--block-bg); } .DEFER { color: var(--defer); background: var(--defer-bg); }
+  .reason { margin-top: 4px; color: var(--ink); }
+  .reason code { font-size: 11px; color: var(--muted); }
+  .status { font-size: 12px; margin-top: 4px; color: var(--muted); }
+  button.act { border: 0; background: var(--accent); color: var(--accent-ink); padding: 8px 12px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+  button.act:disabled { opacity: .45; cursor: not-allowed; }
+  button.ghost { border: 1px solid var(--line); background: transparent; color: var(--ink); padding: 6px 10px; border-radius: 8px; cursor: pointer; }
+  button.mini { border: 0; background: transparent; cursor: pointer; font-size: 15px; padding: 0 4px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 10px; }
+  .codebox { font: 700 34px/1 ui-monospace, Consolas, monospace; letter-spacing: 10px; color: var(--code); margin: 8px 0; }
+  .prompt { padding: 10px 12px; border-left: 3px solid var(--accent); background: var(--bg); border-radius: 6px; }
+  .muted { color: var(--muted); font-size: 13px; }
+  input[type=text] { padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); min-width: 0; }
+  .result.ok { color: var(--pay); font-weight: 700; } .result.bad { color: var(--block); font-weight: 700; }
+  .feed { max-height: 320px; overflow: auto; display: grid; gap: 8px; }
+  .feed div { padding: 8px 10px; border-radius: 8px; background: var(--bg); font-size: 14px; }
+  .rec.on { background: var(--block); color: #fff; }
+  .hidden { display: none !important; }
+  ul.plain { margin: 6px 0; padding-left: 18px; }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Panch</h1>
+    <div class="sub" id="sub">Pay the right bill, to the right person</div>
+  </div>
+  <div class="row" style="margin:0">
+    <span class="badge" id="voiceBadge">voice: …</span>
+    <span class="badge" id="srcBadge"></span>
+    <div class="langs" id="langs">
+      <button data-l="ta">தமிழ்</button><button data-l="hi">हिंदी</button><button data-l="en">English</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div style="display:grid; gap:16px; align-content:start">
+    <section>
+      <h2>This week's bills</h2>
+      <table>
+        <thead><tr><th></th><th>Vendor</th><th class="amt">Rs</th><th>Outcome and reason</th><th></th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </section>
+
+    <section id="cbPanel" class="hidden">
+      <h2>Changed bank account: call-back on the number on file</h2>
+      <div id="cbBody"></div>
+    </section>
+  </div>
+
+  <div style="display:grid; gap:16px; align-content:start">
+    <section>
+      <h2>Payment plan</h2>
+      <div id="plan"></div>
+      <div class="row"><button class="act" id="prepBtn">Prepare approval</button></div>
+    </section>
+
+    <section id="apprPanel" class="hidden">
+      <h2>Owner approval</h2>
+      <div id="apprBody"></div>
+    </section>
+
+    <section>
+      <h2>Activity</h2>
+      <div class="feed" id="feed"></div>
+    </section>
+  </div>
+</main>
+
+<script>
+let savedLang = null; try { savedLang = localStorage.getItem("panch.lang"); } catch (e) {}
+const S = { lang: savedLang || "ta", batch: null, bundle: null, confirmed: false, authorised: false,
+            dev: false, approvers: ["owner"], payout: {}, cb: null };
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+async function api(path, body) {
+  const r = await fetch(path, body === undefined ? {} :
+    { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw Object.assign(new Error(typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail)), { status: r.status, data });
+  return data;
+}
+
+function play(b64) {
+  if (!b64) return;
+  new Audio("data:audio/wav;base64," + b64).play().catch(() => {});
+}
+async function say(message_key, vars = {}, audio = true) {
+  const r = await api("/api/speak", { message_key, lang: S.lang, vars, audio });
+  if (audio) play(r.audio_b64);
+  return r.text;
+}
+function feed(text, cls = "") {
+  const d = document.createElement("div");
+  d.className = cls; d.textContent = text;
+  $("feed").prepend(d);
+}
+
+/* ---- WAV recorder (16 kHz mono PCM16) so Saaras gets a format it surely accepts ---- */
+const Rec = {
+  async start() {
+    this.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const src = this.ctx.createMediaStreamSource(this.stream);
+    this.node = this.ctx.createScriptProcessor(4096, 1, 1);
+    this.chunks = [];
+    this.node.onaudioprocess = e => this.chunks.push(new Float32Array(e.inputBuffer.getChannelData(0)));
+    src.connect(this.node); this.node.connect(this.ctx.destination);
+  },
+  async stop() {
+    this.node.disconnect(); this.stream.getTracks().forEach(t => t.stop());
+    const rate = this.ctx.sampleRate; await this.ctx.close();
+    const len = this.chunks.reduce((n, c) => n + c.length, 0), all = new Float32Array(len);
+    let o = 0; for (const c of this.chunks) { all.set(c, o); o += c.length; }
+    const ratio = rate / 16000, n = Math.floor(len / ratio), pcm = new Int16Array(n);
+    for (let i = 0; i < n; i++) { const s = Math.max(-1, Math.min(1, all[Math.floor(i * ratio)])); pcm[i] = s < 0 ? s * 0x8000 : s * 0x7fff; }
+    const buf = new ArrayBuffer(44 + pcm.length * 2), v = new DataView(buf);
+    const w = (p, s) => [...s].forEach((ch, i) => v.setUint8(p + i, ch.charCodeAt(0)));
+    w(0, "RIFF"); v.setUint32(4, 36 + pcm.length * 2, true); w(8, "WAVE"); w(12, "fmt ");
+    v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true); v.setUint32(24, 16000, true);
+    v.setUint32(28, 32000, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, "data"); v.setUint32(40, pcm.length * 2, true);
+    new Int16Array(buf, 44).set(pcm);
+    let bin = ""; const bytes = new Uint8Array(buf);
+    for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    return btoa(bin);
+  }
+};
+function recButton(label, onAudio) {
+  const b = document.createElement("button");
+  b.className = "ghost rec"; b.textContent = "🎙 " + label;
+  let on = false;
+  b.onclick = async () => {
+    try {
+      if (!on) { await Rec.start(); on = true; b.classList.add("on"); b.textContent = "■ stop"; }
+      else { on = false; b.classList.remove("on"); b.textContent = "🎙 " + label; await onAudio(await Rec.stop()); }
+    } catch (e) { on = false; b.classList.remove("on"); b.textContent = "🎙 " + label; feed("Mic: " + e.message, "bad"); }
+  };
+  return b;
+}
+
+/* ---- batch table ---- */
+async function loadBatch() {
+  S.batch = await api(`/api/batches/demo?lang=${S.lang}`);
+  $("srcBadge").textContent = "data: " + S.batch.source;
+  renderRows(); renderPlan();
+}
+function renderRows() {
+  const rows = S.batch.invoices.map(inv => {
+    const st = S.payout[inv.id];
+    const action = inv.codes.includes("ACCOUNT_CHANGED")
+      ? `<button class="ghost" onclick="startCallback('${inv.id}')">Call vendor on file</button>` : "";
+    const msme = inv.msme_days_left == null ? "" : ` · MSME ${inv.msme_days_left}d`;
+    return `<tr>
+      <td><b>${esc(inv.label)}</b></td>
+      <td>${esc(inv.vendor_name)}<div class="muted">a/c …${esc(inv.account_last4)}${msme}</div></td>
+      <td class="amt">${esc(inv.amount_display)}</td>
+      <td><span class="chip ${inv.outcome}">${inv.outcome}</span>
+        ${inv.reasons.map(r => `<div class="reason">${esc(r.text)} <code>${esc(r.code)}</code></div>`).join("")}
+        ${st ? `<div class="status">payout: <b>${esc(st)}</b></div>` : ""}</td>
+      <td><button class="mini" title="Speak" onclick="speakReasons('${inv.id}')">🔊</button>${action}</td>
+    </tr>`;
+  });
+  $("rows").innerHTML = rows.join("");
+}
+async function speakReasons(id) {
+  const inv = S.batch.invoices.find(i => i.id === id);
+  const key = inv.codes.length ? inv.codes[0].toLowerCase() : (inv.outcome === "DEFER" ? "cash_deferred" : "pay_ready");
+  await say(key);
+}
+
+/* ---- plan ---- */
+function renderPlan() {
+  const p = S.batch.plan || {}, by = Object.fromEntries(S.batch.invoices.map(i => [i.id, i]));
+  const line = id => by[id] ? `${by[id].label} · ${esc(by[id].vendor_name)} · Rs ${by[id].amount_display}` : id;
+  const inr = v => Number(v).toLocaleString("en-IN");
+  $("plan").innerHTML = `
+    <div class="muted">Cash available: <b>Rs ${inr(S.batch.cash_limit)}</b></div>
+    <div style="margin-top:8px"><b>Pay now</b><ul class="plain">${(p.bundle || []).map(id => `<li>${line(id)}</li>`).join("")}</ul></div>
+    <div><b>Deferred (cash)</b><ul class="plain">${(p.deferred || []).map(id => `<li>${line(id)}</li>`).join("")}</ul></div>
+    ${p.regret ? `<div class="muted">Protects Rs ${inr(p.protected)} of MSME deadlines. Paying earliest-deadline-first would spend Rs ${inr(p.regret.naive_paid)} and protect only Rs ${inr(p.regret.naive_protected)}.</div>` : ""}`;
+}
+
+/* ---- approval ---- */
+$("prepBtn").onclick = async () => {
+  try {
+    const ids = (S.batch.plan && S.batch.plan.bundle) || [];
+    const b = await api("/api/bundles", { invoice_ids: ids, lang: S.lang });
+    S.bundle = b; S.confirmed = false; S.authorised = false;
+    renderApproval(); play(b.audio_b64);
+    feed(`Bundle ${b.bundle_id}: ${b.count} bills, Rs ${b.total_display}`);
+  } catch (e) { feed("Could not prepare: " + e.message, "bad"); }
+};
+function renderApproval(result) {
+  const b = S.bundle; $("apprPanel").classList.remove("hidden");
+  $("apprBody").innerHTML = `
+    <div class="prompt">${esc(b.prompt)}</div>
+    <div class="codebox">${esc(b.code)}</div>
+    <div class="muted">${b.count} bills · Rs ${esc(b.total_display)} · hash ${esc(b.hash.slice(0, 12))}… · expires ${new Date(b.expires_at).toLocaleTimeString()}</div>
+    <div class="row" id="apprCtl"></div>
+    <div class="row"><input type="text" id="typedCode" placeholder="or type the code" inputmode="numeric" maxlength="3" style="width:150px">
+      <button class="ghost" id="typedBtn">Approve with code</button></div>
+    <div class="row ${S.dev ? "" : "hidden"}"><input type="text" id="devTx" placeholder="dev: transcript, e.g. haan 22,000 do bill ${b.code.split("").join("-")}" style="flex:1">
+      <button class="ghost" id="devBtn">Send</button></div>
+    <div id="apprResult" style="margin-top:10px">${result ? resultHtml(result) : ""}</div>
+    <div id="pinBox" class="${S.confirmed && !S.authorised ? "" : "hidden"}" style="margin-top:12px">
+      <div class="muted">Step 2: PIN tap authorises this exact bundle (hash ${esc(b.hash.slice(0, 12))}…)${b.approvers_required > 1 ? " · <b>needs 2 approvers</b>" : ""}</div>
+      <div class="row">
+        <select id="pinWho">${S.approvers.map(a => `<option value="${esc(a)}">${esc(a)}</option>`).join("")}</select>
+        <input type="password" id="pinVal" inputmode="numeric" autocomplete="off" placeholder="PIN" style="width:110px">
+        <button class="act" id="pinBtn">Authorise</button>
+      </div>
+      <div id="pinMsg" style="margin-top:6px"></div>
+    </div>
+    <div class="row"><button class="act" id="execBtn" ${S.authorised ? "" : "disabled"}>Pay now</button>
+      <button class="ghost ${S.dev ? "" : "hidden"}" id="simBtn">dev: simulate webhooks</button></div>`;
+  $("apprCtl").append(recButton("Speak approval", a => submitApproval({ channel: "voice", audio_b64: a })));
+  const replay = document.createElement("button"); replay.className = "ghost"; replay.textContent = "🔊 Repeat";
+  replay.onclick = () => play(b.audio_b64); $("apprCtl").append(replay);
+  $("typedBtn").onclick = () => submitApproval({ channel: "typed", code: $("typedCode").value });
+  $("devBtn").onclick = () => submitApproval({ channel: "voice", transcript: $("devTx").value });
+  $("execBtn").onclick = execute;
+  $("simBtn").onclick = simulate;
+  $("pinBtn").onclick = submitPin;
+}
+async function submitPin() {
+  try {
+    const r = await api(`/api/bundles/${S.bundle.bundle_id}/pin`, {
+      approver_id: $("pinWho").value, pin: $("pinVal").value, bundle_hash: S.bundle.hash, lang: S.lang });
+    $("pinVal").value = ""; play(r.audio_b64);
+    $("pinMsg").innerHTML = `<div class="result ${r.authorised ? "ok" : "bad"}">${esc(r.message)}</div>
+      <div class="muted">approved by: ${esc(r.approvers.join(", ") || "none")} (${r.approvers.length}/${r.required})${r.codes.length ? " — " + esc(r.codes.join(", ")) : ""}</div>`;
+    if (r.authorised) { S.authorised = true; $("execBtn").disabled = false; $("pinBox").querySelector(".row").classList.add("hidden"); }
+  } catch (e) { feed("PIN error: " + e.message, "bad"); }
+}
+function resultHtml(r) {
+  return `<div class="result ${r.valid ? "ok" : "bad"}">${esc(r.message)}</div>
+    ${r.transcript ? `<div class="muted">heard: “${esc(r.transcript)}”</div>` : ""}
+    <div class="muted">${Object.entries(r.checks || {}).map(([k, v]) => `${v ? "✓" : "✗"} ${k}`).join(" · ")}${r.codes.length ? " — " + r.codes.join(", ") : ""}</div>`;
+}
+async function submitApproval(body) {
+  try {
+    const r = await api(`/api/bundles/${S.bundle.bundle_id}/approve`, { lang: S.lang, ...body });
+    S.confirmed = S.confirmed || r.valid; play(r.audio_b64); renderApproval(r);
+  } catch (e) { feed("Approval error: " + e.message, "bad"); }
+}
+async function execute() {
+  try { const r = await api(`/api/bundles/${S.bundle.bundle_id}/execute`, {}); feed("Payouts started: " + JSON.stringify(r.result)); }
+  catch (e) { feed(e.status === 501 ? "Payouts module (PR 3) not merged yet. Use dev: simulate webhooks." : "Execute refused: " + e.message, "bad"); }
+}
+async function simulate() {
+  const ids = S.bundle.items.map(i => i.invoice_id);
+  for (const id of ids) await api("/api/dev/payout-event", { invoice_id: id, state: "PENDING" });
+  setTimeout(() => ids.forEach(id => api("/api/dev/payout-event", { invoice_id: id, state: "SUCCESS" })), 1200);
+  // H goes to the success-then-reversed test account in the demo
+  if (ids.includes("inv_H")) setTimeout(() => api("/api/dev/payout-event", { invoice_id: "inv_H", state: "REVERSED" }), 3500);
+}
+
+/* ---- call-back ---- */
+async function startCallback(invoiceId) {
+  try {
+    const s = await api("/api/callbacks", { invoice_id: invoiceId });
+    S.cb = s; renderCallback(); play(s.audio_b64);
+  } catch (e) { feed("Call-back error: " + e.message, "bad"); }
+}
+function renderCallback() {
+  const s = S.cb; $("cbPanel").classList.remove("hidden");
+  const r = s.result;
+  $("cbBody").innerHTML = `
+    <div class="muted">Calling the number in the vendor master: <b>${esc(s.phone_used)}</b>${s.invoice_phone_ignored ? ` · number printed on the invoice (${esc(s.invoice_phone_ignored)}) is ignored` : ""}</div>
+    <div class="prompt" style="margin-top:8px">${esc(s.prompt)}</div>
+    <div class="row" id="cbCtl"></div>
+    <div class="row ${S.dev ? "" : "hidden"}"><input type="text" id="cbTx" placeholder="dev: vendor says, e.g. naalu ezhu rendu onbadhu" style="flex:1"><button class="ghost" id="cbDev">Send</button></div>
+    <div id="cbRes" style="margin-top:10px">${r ? `
+      <div class="result ${r.passed ? "ok" : "bad"}" id="cbMsg"></div>
+      <div class="muted">heard digits: ${esc(r.evidence.spoken_last4 || r.evidence.spoken_digits || "none")} · invoice account ends ${esc(r.evidence.expected_last4)}</div>
+      ${r.passed ? `<div class="row"><button class="act" id="cbApprove">Approve account change</button><button class="ghost" id="cbReject">Reject</button></div>` : ""}` : ""}</div>`;
+  $("cbCtl").append(recButton("Record vendor's answer", a => finishCallback({ audio_b64: a })));
+  $("cbDev").onclick = () => finishCallback({ transcript: $("cbTx").value });
+  if (r) {
+    const vars = { last4: r.evidence.expected_last4 };
+    say(r.message_key, vars).then(t => { $("cbMsg").textContent = t; });
+    if (r.passed) {
+      $("cbApprove").onclick = () => ownerDecision(true);
+      $("cbReject").onclick = () => ownerDecision(false);
+    }
+  }
+}
+async function finishCallback(body) {
+  try { S.cb = await api(`/api/callbacks/${S.cb.id}/result`, body); renderCallback(); await loadBatch(); }
+  catch (e) { feed("Call-back error: " + e.message, "bad"); }
+}
+async function ownerDecision(approve) {
+  await api(`/api/callbacks/${S.cb.id}/owner`, { approve, lang: S.lang });
+  await loadBatch();
+}
+
+/* ---- live events ---- */
+function connect() {
+  const es = new EventSource("/api/events");
+  es.addEventListener("payout", async ev => {
+    const e = JSON.parse(ev.data);
+    S.payout[e.invoice_id] = e.state + (e.simulated ? " (simulated)" : "");
+    renderRows();
+    const text = await say(e.message_key, e.vars, e.state !== "PENDING");
+    feed(text);
+  });
+  es.addEventListener("approval", ev => { const e = JSON.parse(ev.data); feed(`Approval ${e.step}: ${e.valid ? "ok" : "not yet"} ${e.codes.join(", ")}`); });
+  es.addEventListener("error", ev => { if (ev.data) feed("Error: " + JSON.parse(ev.data).detail, "bad"); });
+}
+
+/* ---- language ---- */
+function setLang(l) {
+  S.lang = l; try { localStorage.setItem("panch.lang", l); } catch (e) {}
+  document.documentElement.lang = l;
+  document.querySelectorAll("#langs button").forEach(b => b.classList.toggle("on", b.dataset.l === l));
+  loadBatch();
+}
+document.querySelectorAll("#langs button").forEach(b => b.onclick = () => setLang(b.dataset.l));
+
+(async () => {
+  const h = await api("/api/health");
+  S.dev = h.dev; S.approvers = h.approvers.length ? h.approvers : ["owner"];
+  $("voiceBadge").textContent = "voice: " + (h.voice ? "Sarvam on" : "off (text only)") + (h.dev_pins ? " · DEV PINs" : "");
+  setLang(S.lang); connect();
+})();
+</script>
+</body>
+</html>
