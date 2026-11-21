@@ -52,6 +52,11 @@ class VerificationClient:
         self.live = bool(self.cid and self.sec) if live is None else live
         self.fixtures = json.loads((FIXTURES / "verification.json").read_text(encoding="utf-8"))
         self.last_error: Optional[str] = None
+        # Memoised bank verifications: one account never pays for two penny drops.
+        self._bank_cache: dict = {}
+
+    def cache_clear(self) -> None:
+        self._bank_cache.clear()
 
     def _post(self, path: str, body: dict) -> dict:
         h = {"x-client-id": self.cid, "x-client-secret": self.sec, "Content-Type": "application/json",
@@ -67,6 +72,9 @@ class VerificationClient:
         return data
 
     def bank(self, account: str, ifsc: str, name: Optional[str] = None) -> dict:
+        key = (account, ifsc, name)
+        if key in self._bank_cache:
+            return self._bank_cache[key]
         body = {"bank_account": account, "ifsc": ifsc}
         if name:
             body["name"] = name
@@ -74,13 +82,17 @@ class VerificationClient:
             try:
                 d = self._post("/bank-account/sync", body)
                 d["canned"] = False
+                self._bank_cache[key] = d
                 return d
             except CashfreeUnavailable as e:
                 self.last_error = str(e)
         fx = self.fixtures["bank"].get(account)
         if fx is None:
-            return {"account_status": "UNVERIFIABLE", "canned": True, "note": "not in sandbox test data"}
-        return {**fx, "canned": True, "live_error": self.last_error}
+            res = {"account_status": "UNVERIFIABLE", "canned": True, "note": "not in sandbox test data"}
+        else:
+            res = {**fx, "canned": True, "live_error": self.last_error}
+        self._bank_cache[key] = res
+        return res
 
     def gstin(self, gstin: str, business_name: Optional[str] = None) -> dict:
         if self.live:
