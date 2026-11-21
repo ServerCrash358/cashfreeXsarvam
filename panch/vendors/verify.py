@@ -33,9 +33,12 @@ def name_score(a: Optional[str], b: Optional[str]) -> int:
         return 88
     # Token alignment: each token of the shorter name against its best partner in the longer one.
     # (A whole-name phonetic key alone let "Jane D" pass as "John Doe": both collapse to "jn d".)
+    # Words of the longer name that nothing in the shorter one matches lower the score, so "Acme" doesn't
+    # pass as "Acmee Corp" (exact subsets, e.g. a proprietor inside a business name, returned 95 above).
     short, other = (ta, tb) if len(ta) <= len(tb) else (tb, ta)
     sims = [max(_token_sim(t, u) for u in other) for t in short]
-    return int(round(100 * sum(sims) / len(sims)))
+    covered = sum(1 for u in other if max(_token_sim(t, u) for t in short) >= 0.85) / len(other)
+    return int(round(100 * (sum(sims) / len(sims)) * (0.6 + 0.4 * covered)))
 
 
 def _token_sim(t: str, u: str) -> float:
@@ -43,15 +46,15 @@ def _token_sim(t: str, u: str) -> float:
         return 1.0
     if len(t) == 1 or len(u) == 1:                       # an initial is weak evidence
         return 0.75 if t[0] == u[0] else 0.0
+    best = SequenceMatcher(None, t, u).ratio()
+    if best >= 0.7:                                      # spelling variant: let the phonetic key close the gap
+        best = max(best, SequenceMatcher(None, vendor_key(t), vendor_key(u)).ratio())
     if min(len(t), len(u)) >= 3 and (t.startswith(u) or u.startswith(t)):
-        return 0.9                                       # truncation: "elec" / "electricals"
+        best = max(best, 0.9)                            # truncation: "elec" / "electricals"
     s, l = (t, u) if len(t) <= len(u) else (u, t)
     if len(s) >= 3 and s[0] == l[0] and _subsequence(s, l):
-        return 0.85                                      # abbreviation: "engg" / "engineering"
-    raw = SequenceMatcher(None, t, u).ratio()
-    if raw >= 0.7:                                       # spelling variant: let the phonetic key close the gap
-        return max(raw, SequenceMatcher(None, vendor_key(t), vendor_key(u)).ratio())
-    return raw
+        best = max(best, 0.85)                           # abbreviation: "engg" / "engineering"
+    return best
 
 
 def _subsequence(s: str, l: str) -> bool:
@@ -98,6 +101,9 @@ def _gst_checks(inv: Invoice, client, cfg: dict) -> list[CheckResult]:
     won't match synthetic vendors, so anything short of a clean pass is an ASK."""
     if not inv.gstin:
         return [CheckResult("VENDOR_UNVERIFIABLE", False, "ask", {"reason": "no GSTIN on the invoice"},
+                            "vendor_unverifiable")]
+    if not callable(getattr(client, "gstin", None)):
+        return [CheckResult("VENDOR_UNVERIFIABLE", False, "ask", {"gstin": inv.gstin, "reason": "no GSTIN check available"},
                             "vendor_unverifiable")]
     g = client.gstin(inv.gstin)
     ev = {"gstin": inv.gstin, "valid": g.get("valid"), "legal_name": g.get("legal_name_of_business"),

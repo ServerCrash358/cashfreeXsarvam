@@ -212,9 +212,12 @@ def test_terminal_failure_ignores_later_success_and_ledger_cap():
     assert led.can_start("B", D("1"), D("18000"))                                    # would exceed amount
 
 
-def test_reversal_before_success_is_ignored():
+def test_reversal_before_success_is_applied_and_final():
+    # PR 3: Cashfree only reverses a transfer that completed, so a REVERSED seen before our SUCCESS is authoritative.
+    # Ignoring it left the bill stuck "in flight" forever (the status poll also says REVERSED). Never repaid.
     a = Attempt("t", "H", "b", "x", D("4000")); apply_event(a, "SENT")
-    assert not apply_event(a, "REVERSED") and a.state == "SENT"
+    assert apply_event(a, "REVERSED") and a.state == "REVERSED"
+    assert not apply_event(a, "SUCCESS", "COMPLETED") and a.state == "REVERSED"
 
 
 # --------------------------------------------------------------------- audit
@@ -288,6 +291,7 @@ def client():
     from fastapi.testclient import TestClient
     import app.main as m
     m.engine.cfg["payout_mode"] = "sim"
+    m.engine.payouts.sec = "test-webhook-secret"   # PR 3: an empty secret is rejected (anyone could forge it)
     return TestClient(m.app), m
 
 

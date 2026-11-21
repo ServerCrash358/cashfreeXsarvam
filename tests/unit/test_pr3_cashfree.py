@@ -124,11 +124,14 @@ def test_u_ven_3_different_first_name_never_passes():
     assert not _name_check("bank", "Jane D", "John Doe", CFG).passed
 
 
-@pytest.mark.xfail(strict=True, reason="Team decision pending: UNIT_TESTS.md U-VEN-3 wants BLOCK for 'Jane D'; we "
-                                       "score 62 (ASK: no money moves, owner decides). A BLOCK rule strict enough "
-                                       "for this would also block 'Lakshmi Hardware' vs proprietor 'Lakshmi Narayanan'.")
 def test_u_ven_3_block_band():
-    assert name_score("Jane D", "John Doe") < 60
+    assert name_score("Jane D", "John Doe") < 60                           # Cashfree's own sandbox score is 38
+    assert _name_check("bank", "Jane D", "John Doe", CFG).severity == "block"
+
+
+def test_extra_unmatched_words_lower_the_score():
+    assert name_score("ACMEE TRADING CORP", "Acme") < 85                  # test_more.py: must not pass
+    assert name_score("John Doe Packaging", "John Doe") >= 85              # proprietor inside business name
 
 
 def test_name_score_spelling_variants_and_abbreviations():
