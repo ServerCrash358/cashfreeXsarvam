@@ -1,138 +1,330 @@
 <!doctype html>
-<html lang="en">
+<html lang="hi">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>TijoriPay</title>
 <style>
-/* Cashfree-style violet theme */
+/* TijoriPay · Sarvam palette (from sarvam.ai: orange→periwinkle hero, navy pill buttons, blue accent) */
 :root{
-  --brand:#6933d3;--brand-600:#5a28bd;--brand-50:#f3eefe;--brand-100:#e6dcfc;--navy:#1d1145;
-  --bg:#f6f4fb;--card:#fff;--ink:#1b1730;--mute:#6c6684;--line:#e7e3f1;
-  --pay:#0f8a5f;--pay-bg:#e3f6ee;--ask:#b26100;--ask-bg:#fdf1e0;--block:#c62e3b;--block-bg:#fde8ea;--defer:#4a5fc1;--defer-bg:#e8ecfb;
-  --radius:14px;--shadow:0 1px 2px rgba(29,17,69,.06),0 4px 16px rgba(29,17,69,.05)}
+  --brand:#556adc;--brand-600:#4250d5;--brand-50:#eef1fd;--brand-100:#dde5fd;--brand-200:#bed2ff;
+  --orange:#d5650f;--orange-2:#eaaf1c;--orange-50:#fdf1e4;
+  --navy:#1e2033;--navy-2:#3a3f5c;
+  --bg:#f7f7f8;--card:#fff;--ink:#1f1f1f;--ink-2:#3d3d3d;--mute:#666;--line:#ececec;--line-2:#e0e0e0;
+  --pay:#4f7f22;--pay-bg:#e3f1d8;--ask:#b9560c;--ask-bg:#fdeedd;--block:#c2344a;--block-bg:#fce8eb;--defer:#4250d5;--defer-bg:#e8effc;
+  --r:18px;--r-sm:999px;--shadow:0 1px 2px rgba(30,32,51,.04),0 6px 20px rgba(30,32,51,.05);--shadow-lg:0 18px 48px rgba(30,32,51,.22);
+}
 *{box-sizing:border-box}
-body{margin:0;font:14px/1.5 "Inter",system-ui,-apple-system,"Segoe UI",Roboto,"Nirmala UI","Noto Sans Devanagari","Noto Sans Tamil",sans-serif;background:var(--bg);color:var(--ink)}
-header{display:flex;gap:14px;align-items:center;padding:14px 24px;background:linear-gradient(100deg,var(--navy) 0%,#3a1d8a 55%,var(--brand) 100%);color:#fff;flex-wrap:wrap;box-shadow:0 2px 12px rgba(29,17,69,.25)}
-header h1{margin:0;font-size:21px;font-weight:800;letter-spacing:.2px;display:flex;align-items:center;gap:8px}
-header h1::before{content:"";width:22px;height:22px;border-radius:7px;background:linear-gradient(135deg,#b69cff,#fff);display:inline-block}
-header .sub{opacity:.78;font-size:12.5px}header .sp{flex:1}
-header label{font-size:13px;opacity:.95}header select{margin-left:6px;padding:5px 8px;border-radius:8px;border:0;background:#ffffff1f;color:#fff}
-header select option{color:var(--ink)}
-header button.ghost{background:transparent;color:#fff;border-color:#ffffff66}header button.ghost:hover{background:#ffffff1a}
-select,input,button,textarea{font:inherit}
-.chip{display:inline-block;padding:2px 10px;border-radius:999px;font-size:11.5px;font-weight:700;letter-spacing:.3px}
-.PAY{color:var(--pay);background:var(--pay-bg)}.ASK{color:var(--ask);background:var(--ask-bg)}.BLOCK{color:var(--block);background:var(--block-bg)}.DEFER{color:var(--defer);background:var(--defer-bg)}
-.tag{display:inline-block;padding:1px 8px;border:1px solid var(--line);border-radius:999px;font-size:11px;color:var(--mute);background:#fff}
-header .tag{background:transparent}
-main{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:18px;padding:20px 24px;max-width:1500px;margin:0 auto}
-@media(max-width:1000px){main{grid-template-columns:1fr;padding:16px}header{padding:12px 16px}}
-.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;margin-bottom:18px;box-shadow:var(--shadow)}
-.card h2{margin:0 0 12px;font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px}
-.step{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--brand);color:#fff;font-size:12px;font-weight:700;flex:none}
-table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
-th{font-size:11.5px;color:var(--mute);font-weight:600;text-transform:uppercase;letter-spacing:.4px}
-tr.row{cursor:pointer;transition:background .12s}tr.row:hover{background:var(--brand-50)}tr.sel{background:var(--brand-100)}
-.native{font-size:12px;color:var(--mute)}.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
-.reason{padding:9px 12px;border-left:3px solid var(--line);margin:8px 0;background:#faf9fd;border-radius:8px}
-.reason.block{border-color:var(--block);background:#fff7f8}.reason.ask{border-color:var(--ask);background:#fffaf2}.reason.info{border-color:var(--brand);background:var(--brand-50)}
-details summary{cursor:pointer;color:var(--brand);font-weight:600;margin-top:6px}
-details pre{font-size:11px;white-space:pre-wrap;word-break:break-word;background:#f7f5fc;padding:10px;border-radius:8px;max-height:240px;overflow:auto}
-button{padding:7px 14px;border-radius:10px;border:1px solid var(--brand);background:var(--brand);color:#fff;cursor:pointer;font-weight:600;transition:background .12s}
-button:hover{background:var(--brand-600)}button.ghost{background:#fff;color:var(--brand)}button.ghost:hover{background:var(--brand-50)}
-button.pay{background:var(--pay);border-color:var(--pay)}button.pay:hover{background:#0b7350}
-button:disabled{opacity:.4;cursor:not-allowed}
-.row2{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0}
-input[type=text],input[type=password],input[type=number]{padding:7px 10px;border:1px solid var(--line);border-radius:10px;min-width:0;background:#fff}
-input:focus,select:focus,button:focus-visible{outline:2px solid var(--brand-100);outline-offset:1px;border-color:var(--brand)}
-input[type=file]{font-size:12.5px;max-width:100%}
-.big{font-size:22px;font-weight:800}.mute{color:var(--mute)}.ok{color:var(--pay);font-weight:700}.bad{color:var(--block);font-weight:700}
-.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.kpi{border:1px solid var(--line);border-radius:12px;padding:12px;background:linear-gradient(180deg,#fff,#faf8ff)}
-@media(max-width:560px){.kpis{grid-template-columns:1fr}}
-.kpi .v{font-size:26px;font-weight:800;color:var(--brand)}.mono{font-family:ui-monospace,Consolas,monospace;font-size:12px}
-.tabs button{background:#fff;color:var(--brand)}.tabs button.on{background:var(--brand);color:#fff}
-.saythis{margin:10px 0;padding:12px 14px;border-radius:12px;background:linear-gradient(120deg,var(--brand-50),#fff);border:1px dashed var(--brand)}
-.saythis .line{font-size:19px;font-weight:700;color:var(--navy);margin:2px 0 8px}
-.saythis .code{display:flex;gap:6px}.saythis .code span{display:inline-grid;place-items:center;width:34px;height:40px;border-radius:9px;background:var(--brand);color:#fff;font:700 20px ui-monospace,Consolas,monospace}
-.tick{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:700}.tick.y{color:var(--pay);background:var(--pay-bg)}.tick.n{color:var(--block);background:var(--block-bg)}
-.tablewrap{overflow-x:auto;margin:0 -4px}.tablewrap table{min-width:640px}#pay{overflow-x:auto}
+html,body{margin:0}
+body{font:14px/1.5 "Inter",system-ui,-apple-system,"Segoe UI",Roboto,"Nirmala UI","Noto Sans Devanagari","Noto Sans Tamil",sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+select,input,button,textarea{font:inherit;color:inherit}
+svg.i{width:16px;height:16px;flex:none;vertical-align:-3px}
+.mute{color:var(--mute)}.mono{font-family:ui-monospace,"Cascadia Mono",Consolas,monospace;font-size:12px}
+.ok{color:var(--pay);font-weight:700}.bad{color:var(--block);font-weight:700}
+
+/* ── top bar ─────────────────────────────────────────── */
+/* Sarvam-style hero: warm orange at the top fading through peach into periwinkle and white */
+.top{position:relative;z-index:0;color:var(--ink);
+  background:linear-gradient(180deg,var(--orange) 0%,#e8893a 18%,#f3c9a4 42%,#dfe6ff 72%,var(--bg) 100%)}
+.bar{max-width:1440px;margin:0 auto;padding:14px 24px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;color:#fff}
+.logo{width:34px;height:34px;border-radius:11px;background:#fff;display:grid;place-items:center;color:var(--orange);font-weight:900;font-size:17px;box-shadow:0 4px 14px rgba(120,50,0,.25)}
+.brand b{font-size:19px;letter-spacing:.1px}.brand small{display:block;opacity:.85;font-size:12px;margin-top:-2px}
+.sp{flex:1}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;font-size:12px;background:#ffffffd9;color:var(--ink-2);white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.dot{width:7px;height:7px;border-radius:50%;background:#6ea335;box-shadow:0 0 0 3px #6ea33533}.dot.warn{background:var(--orange-2);box-shadow:0 0 0 3px #eaaf1c33}
+.seg{display:inline-flex;background:#ffffffd9;border-radius:999px;padding:3px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.seg button{border:0;background:transparent;color:var(--ink-2);padding:5px 12px;border-radius:999px;cursor:pointer;font-weight:600;font-size:13px}
+.seg button.on{background:linear-gradient(180deg,var(--navy-2),var(--navy));color:#fff}
+.btn-top{border:0;background:#ffffffd9;color:var(--ink);padding:7px 14px;border-radius:999px;cursor:pointer;font-weight:600;display:inline-flex;gap:6px;align-items:center;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.btn-top:hover{background:#fff}
+
+/* summary strip */
+.stats{max-width:1440px;margin:0 auto;padding:8px 24px 26px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.stat{background:#ffffffe6;border:1px solid #ffffff;border-radius:var(--r);padding:14px 16px;box-shadow:0 4px 18px rgba(30,32,51,.06)}
+.stat .k{font-size:12px;color:var(--mute);display:flex;gap:6px;align-items:center}.stat .v{font-size:28px;font-weight:800;margin-top:2px;letter-spacing:-.4px;color:var(--ink)}
+.stat .s{font-size:12.5px;color:var(--mute)}
+.stat.g .v{color:var(--pay)}.stat.a .v{color:var(--orange)}.stat.r .v{color:var(--block)}
+
+/* ── layout ───────────────────────────────────────────── */
+main{position:relative;z-index:1;max-width:1440px;margin:0 auto;padding:6px 24px 40px;display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:20px;align-items:start}
 section{min-width:0}
-#toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 16px;border-radius:10px;display:none;max-width:90vw;box-shadow:0 6px 24px rgba(29,17,69,.3)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);margin-bottom:20px;overflow:hidden}
+.card-h{display:flex;align-items:center;gap:10px;padding:16px 18px 0}
+.card-h h2{margin:0;font-size:15.5px;font-weight:750;letter-spacing:-.1px}
+.card-b{padding:14px 18px 18px}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;font-size:11.5px;font-weight:750;letter-spacing:.3px;white-space:nowrap}
+.chip::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.PAY{color:var(--pay);background:var(--pay-bg)}.ASK{color:var(--ask);background:var(--ask-bg)}.BLOCK{color:var(--block);background:var(--block-bg)}.DEFER{color:var(--defer);background:var(--defer-bg)}
+.tag{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border:1px solid var(--line-2);border-radius:999px;font-size:11px;color:var(--ink-2);background:#fff;white-space:nowrap}
+.tag.lane-CHANGED_ACCOUNT{border-color:#f3c98a;background:#fff8ec;color:#8a4a00}.tag.lane-NEW_VENDOR{border-color:#c9d2f7;background:#f3f5fe;color:#3546a8}
+
+/* buttons & inputs */
+button{cursor:pointer}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:999px;border:0;background:linear-gradient(180deg,var(--navy-2),var(--navy));color:#fff;font-weight:600;transition:filter .12s,box-shadow .12s;box-shadow:0 2px 8px rgba(30,32,51,.18)}
+.btn:hover{filter:brightness(1.15)}.btn:active{transform:translateY(1px)}
+.btn.ghost{background:#f5f5f5;color:var(--ink);box-shadow:none;border:1px solid var(--line)}.btn.ghost:hover{background:#ececec;filter:none}
+.btn.pay{background:linear-gradient(180deg,#6ea335,#4f7f22)}
+.btn.sm{padding:4px 10px;font-size:12.5px}
+.btn:disabled{opacity:.38;cursor:not-allowed;transform:none}
+.btn.rec-on{background:var(--block);border-color:var(--block);color:#fff;animation:pulse 1.2s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 6px #cc2b3b22}}
+.field{padding:8px 14px;border:1px solid var(--line-2);border-radius:999px;background:#fff;min-width:0}
+.field:focus,.btn:focus-visible,.seg button:focus-visible{outline:3px solid var(--brand-100);outline-offset:1px;border-color:var(--brand)}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0}
+
+/* upload */
+.drop{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 14px;border:1.5px dashed #f0c9a3;border-radius:14px;background:var(--orange-50)}
+.drop input[type=file]{font-size:12.5px;max-width:100%}
+.drop .hint{font-size:12px;color:var(--mute)}
+
+/* bills list */
+.tablewrap{overflow-x:auto;margin-top:12px}
+table{width:100%;border-collapse:collapse;min-width:520px}
+th{font-size:11px;color:var(--mute);font-weight:650;text-transform:uppercase;letter-spacing:.5px;text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+td{padding:11px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr.bill{cursor:pointer;transition:background .12s}tr.bill:hover{background:#faf8ff}tr.bill.sel{background:var(--brand-50);box-shadow:inset 3px 0 0 var(--brand)}
+.who{display:flex;gap:11px;align-items:center;min-width:0}
+.av{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-weight:800;font-size:13px;flex:none}
+.av.PAY{background:var(--pay-bg);color:var(--pay)}.av.ASK{background:var(--ask-bg);color:var(--ask)}.av.BLOCK{background:var(--block-bg);color:var(--block)}.av.DEFER{background:var(--defer-bg);color:var(--defer)}
+.who .n{font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.who .s{font-size:12px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:240px}
+.amt{text-align:right;font-variant-numeric:tabular-nums;font-weight:750;white-space:nowrap}
+.due{display:inline-flex;gap:5px;align-items:center;font-size:12px;font-weight:650;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.due.hot{color:var(--block);background:var(--block-bg)}.due.warm{color:var(--ask);background:var(--ask-bg)}.due.cool{color:var(--ink-2);background:#f1eff7}
+.codes{font-size:11px;color:var(--mute);margin-top:3px}
+.paystate{font-size:12px;font-weight:650;color:var(--ink-2);text-transform:capitalize}
+
+/* why panel */
+.empty{display:flex;gap:12px;align-items:center;color:var(--mute);padding:6px 0}
+.empty .ic{width:40px;height:40px;border-radius:12px;background:var(--brand-50);display:grid;place-items:center;color:var(--brand)}
+.reason{display:flex;gap:10px;align-items:flex-start;padding:11px 12px;border-radius:12px;margin:8px 0;border:1px solid var(--line);background:#fcfbfe}
+.reason .ic{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;flex:none}
+.reason.block{border-color:#f6c9ce;background:#fff8f9}.reason.block .ic{background:var(--block-bg);color:var(--block)}
+.reason.ask{border-color:#f7d9ad;background:#fffaf2}.reason.ask .ic{background:var(--ask-bg);color:var(--ask)}
+.reason.info{border-color:var(--brand-100);background:var(--brand-50)}.reason.info .ic{background:#fff;color:var(--brand)}
+.reason .body{flex:1;min-width:0}.reason .code{font-size:11px;font-weight:750;letter-spacing:.4px;color:var(--ink-2)}
+details summary{cursor:pointer;color:var(--brand);font-weight:650;margin-top:8px}
+details pre{font-size:11px;white-space:pre-wrap;word-break:break-word;background:#f7f5fc;padding:10px;border-radius:10px;max-height:260px;overflow:auto}
+
+/* stepper */
+.steps{position:relative}
+.step{position:relative;padding-left:48px}
+.step::before{content:"";position:absolute;left:21px;top:44px;bottom:-20px;width:2px;background:var(--line-2)}
+.step:last-child::before{display:none}
+.step .num{position:absolute;left:4px;top:14px;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-weight:800;background:#fff;border:2px solid var(--line-2);color:var(--mute);z-index:1}
+.step.active .num{border-color:var(--brand);color:var(--brand);box-shadow:0 0 0 5px var(--brand-50)}
+.step.done .num{background:var(--brand);border-color:var(--brand);color:#fff}
+.step.done::before{background:var(--brand-200)}
+.step .state{margin-left:auto;font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--mute)}
+.step.active .state{color:var(--brand)}.step.done .state{color:var(--pay)}
+
+/* plan */
+.pick{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 12px}
+.pick .b{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:10px;border:1px solid var(--line-2);background:#fff;font-weight:650}
+.pick .b .av{width:24px;height:24px;border-radius:7px;font-size:11px}
+.pick .b.def{opacity:.6;border-style:dashed}
+.cmp{display:grid;gap:8px}
+.cmp .r{display:grid;grid-template-columns:150px 1fr 90px;gap:10px;align-items:center;font-size:12.5px}
+.cmp .track{height:10px;border-radius:99px;background:#efecf6;overflow:hidden}
+.cmp .fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--orange),var(--orange-2))}.cmp .fill.n{background:#cfd3e6}
+.cmp .val{text-align:right;font-weight:750;font-variant-numeric:tabular-nums}
+@media(max-width:560px){.cmp .r{grid-template-columns:1fr 80px}.cmp .track{grid-column:1/-1;order:3}}
+
+/* approval */
+.saythis{margin:12px 0;padding:14px 16px;border-radius:14px;background:linear-gradient(120deg,var(--brand-50),#fff 70%);border:1.5px solid var(--brand-200)}
+.saythis .k{font-size:11.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--brand)}
+.saythis .line{font-size:20px;font-weight:800;color:var(--navy);margin:4px 0 10px;line-height:1.35}
+.digits{display:flex;gap:7px}.digits span{display:grid;place-items:center;width:38px;height:44px;border-radius:12px;background:linear-gradient(180deg,var(--orange-2),var(--orange));color:#fff;font:800 21px ui-monospace,Consolas,monospace;box-shadow:0 4px 12px #d5650f40}
+.prompt{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:12px;background:#faf8ff;border:1px solid var(--line);font-size:13.5px}
+.meta{font-size:11.5px;color:var(--mute);margin-top:6px;word-break:break-all}
+.ticks{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.tick{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700}.tick.y{color:var(--pay);background:var(--pay-bg)}.tick.n{color:var(--block);background:var(--block-bg)}
+.lock{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:12px;border-radius:12px;border:1px solid var(--line);background:#fcfbfe;margin-top:12px}
+.lock .lbl{display:flex;gap:6px;align-items:center;font-weight:650;color:var(--ink-2)}
+
+/* payouts */
+.tl{display:grid;gap:10px}
+.tl .p{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:11px 12px;border:1px solid var(--line);border-radius:12px}
+.tl .p .tid{font-family:ui-monospace,Consolas,monospace;font-size:11.5px;color:var(--mute);word-break:break-all}
+
+/* score & tabs */
+.tabs{display:inline-flex;background:#f1eef8;border-radius:12px;padding:3px}
+.tabs button{border:0;background:transparent;padding:6px 12px;border-radius:9px;font-weight:650;color:var(--mute)}
+.tabs button.on{background:#fff;color:var(--brand);box-shadow:0 1px 3px rgba(23,13,61,.1)}
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.kpi{border:1px solid var(--line);border-radius:14px;padding:14px;background:linear-gradient(180deg,#fff,#faf8ff)}
+.kpi .k{font-size:12px;color:var(--mute)}.kpi .v{font-size:28px;font-weight:800;color:var(--brand);letter-spacing:-.3px}.kpi .s{font-size:12px;color:var(--mute)}
+.claim{display:inline-flex;gap:6px;align-items:center;margin-top:12px;font-size:12.5px;color:var(--pay);background:var(--pay-bg);padding:5px 10px;border-radius:999px;font-weight:650}
+.audit-pre{max-height:340px;overflow:auto;white-space:pre-wrap;background:#f7f5fc;padding:10px;border-radius:10px}
+
+/* toast */
+/* overlays live on their own top layer and never fade content underneath */
+#toast{position:fixed;left:50%;top:16px;transform:translateX(-50%);max-width:min(460px,calc(100vw - 32px));background:var(--navy);color:#fff;padding:11px 16px;border-radius:14px;box-shadow:var(--shadow-lg);display:none;gap:10px;align-items:flex-start;z-index:1000;font-size:13.5px}
+#toast.show{display:flex;animation:in .18s ease-out}
+@keyframes in{from{transform:translate(-50%,-8px)}}
+
+/* voice visualizer: shows Bulbul speaking and the mic listening */
+#viz{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(140%);z-index:900;display:flex;align-items:center;gap:14px;
+  padding:10px 18px 10px 12px;border-radius:999px;background:#fffffff2;border:1px solid var(--line);box-shadow:var(--shadow-lg);transition:transform .25s cubic-bezier(.2,.8,.2,1)}
+#viz.on{transform:translateX(-50%) translateY(0)}
+#viz .orb{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:#fff;flex:none;
+  background:conic-gradient(from 0deg,var(--orange),var(--orange-2),var(--brand-200),var(--brand),var(--orange));animation:spin 3s linear infinite}
+#viz .orb span{width:30px;height:30px;border-radius:50%;background:#fff;display:grid;place-items:center;color:var(--orange)}
+#viz.mic .orb{background:conic-gradient(from 0deg,var(--block),#ff8a9a,var(--block))}
+#viz.mic .orb span{color:var(--block)}
+@keyframes spin{to{transform:rotate(360deg)}}#viz .orb span{animation:spin 3s linear infinite reverse}
+#viz canvas{width:220px;height:40px;display:block}
+#viz .lbl{font-size:12px;font-weight:700;color:var(--ink-2);min-width:96px}#viz .lbl small{display:block;font-weight:500;color:var(--mute)}
+#viz button{border:0;background:#f2f2f2;border-radius:999px;width:28px;height:28px;cursor:pointer;color:var(--ink-2)}
+@media(max-width:560px){#viz canvas{width:130px}#viz .lbl{min-width:0}}
+@media(prefers-reduced-motion:reduce){#viz .orb,#viz .orb span{animation:none}#viz{transition:none}}
+
+@media(max-width:1080px){main{grid-template-columns:1fr}}
+@media(max-width:760px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.bar,.stats{padding-left:16px;padding-right:16px}main{padding:0 16px 32px}.kpis{grid-template-columns:1fr}.brand small{display:none}}
 </style>
 </head>
 <body>
-<header>
-  <h1>TijoriPay</h1><span class="sub">pay the right bill, to the right person</span>
-  <span class="sp"></span>
-  <span id="mode" class="tag" style="color:#fff;border-color:#fff8"></span>
-  <label>Owner language <select id="lang"><option value="hi" selected>हिन्दी</option><option value="ta">தமிழ்</option><option value="en">English</option></select></label>
-  <button class="ghost" onclick="resetAll()">Reset demo</button>
-</header>
+<div class="top">
+  <div class="bar">
+    <div class="brand"><div class="logo">T</div><div><b>TijoriPay</b><small>pay the right bill, to the right person</small></div></div>
+    <span class="sp"></span>
+    <span class="pill" id="mode"><span class="dot"></span><span>…</span></span>
+    <div class="seg" id="langseg" role="group" aria-label="Owner language">
+      <button data-l="hi" class="on">हिन्दी</button><button data-l="ta">தமிழ்</button><button data-l="en">EN</button>
+    </div>
+    <button class="btn-top" onclick="resetAll()" title="Reset the demo batch">
+      <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>Reset</button>
+  </div>
+  <div class="stats" id="stats"></div>
+</div>
+
 <main>
 <section>
   <div class="card">
-    <h2>This week's bills <span class="mute" id="today"></span></h2>
-    <div class="row2"><input type="file" id="files" multiple accept="image/*,.pdf"><button onclick="uploadFiles()">Read with Sarvam Vision</button><span id="upst" class="mute"></span></div>
-    <div class="tablewrap"><table><thead><tr><th>#</th><th>Vendor</th><th class="num">Amount ₹</th><th>MSME deadline</th><th>Lane</th><th>Decision</th><th>Payment</th></tr></thead>
-    <tbody id="rows"></tbody></table></div>
+    <div class="card-h"><h2>This week's bills</h2><span class="mute" id="today"></span></div>
+    <div class="card-b">
+      <div class="drop">
+        <svg class="i" style="width:22px;height:22px;color:var(--brand)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+        <input type="file" id="files" multiple accept="image/*,.pdf">
+        <button class="btn sm" onclick="uploadFiles()">Read with Sarvam Vision</button>
+        <span class="hint" id="upst">Photos or PDFs · Hindi, Tamil, English</span>
+      </div>
+      <div class="tablewrap"><table><thead><tr><th>Vendor</th><th style="text-align:right">Amount ₹</th><th>MSME deadline</th><th>Decision</th><th>Payment</th></tr></thead>
+      <tbody id="rows"></tbody></table></div>
+    </div>
   </div>
-  <div class="card" id="detail"><h2>Select a bill</h2><p class="mute">Every decision comes with its reasons, in your language, and the evidence behind them.</p></div>
+
+  <div class="card" id="detail"><div class="card-b"><div class="empty"><div class="ic">
+    <svg class="i" style="width:20px;height:20px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></div>
+    <div><b style="color:var(--ink)">Select a bill</b><div>Every decision comes with its reasons, in your language, and the evidence behind them.</div></div></div></div></div>
+
   <div class="card">
-    <div class="tabs row2"><button class="on" data-t="score" onclick="tab(this)">Scoreboard</button><button data-t="audit" onclick="tab(this)">Audit ledger</button></div>
-    <div id="score"></div><div id="audit" style="display:none"></div>
+    <div class="card-h"><div class="tabs"><button class="on" data-t="score" onclick="tab(this)">Scoreboard</button><button data-t="audit" onclick="tab(this)">Audit ledger</button></div></div>
+    <div class="card-b"><div id="score"></div><div id="audit" style="display:none"></div></div>
   </div>
 </section>
+
 <section>
-  <div class="card" id="cbcard">
-    <h2><span class="step">1</span>Vendor call-back (changed bank account)</h2>
-    <div id="cb"><p class="mute">Pick a bill in the CHANGED_ACCOUNT lane.</p></div>
-  </div>
-  <div class="card">
-    <h2><span class="step">2</span>Plan under cash</h2>
-    <div class="row2">Cash available ₹ <input type="number" id="cash" value="30000" style="width:120px"><button onclick="doPlan()">Plan payments</button></div>
-    <div id="plan"></div>
-  </div>
-  <div class="card">
-    <h2><span class="step">3</span>Approve the bundle</h2>
-    <div id="appr"><p class="mute">Make a plan first.</p></div>
-  </div>
-  <div class="card">
-    <h2><span class="step">4</span>Payouts (Cashfree)</h2>
-    <div class="row2"><button class="ghost" onclick="post('/api/sweep').then(load)">Reconcile now</button><span class="mute">Auto-sweep every 60 s. API 200 = submitted, not paid.</span></div>
-    <div id="pay"></div>
-  </div>
+  <div class="card"><div class="card-b steps">
+    <div class="step" id="st1">
+      <div class="num">1</div>
+      <div class="card-h" style="padding:16px 0 0"><h2>Vendor call-back</h2><span class="state"></span></div>
+      <div class="mute" style="font-size:12.5px">Changed bank account? Call the number on file, never the one on the invoice.</div>
+      <div id="cb" style="padding:4px 0 18px"></div>
+    </div>
+    <div class="step" id="st2">
+      <div class="num">2</div>
+      <div class="card-h" style="padding:16px 0 0"><h2>Plan under cash</h2><span class="state"></span></div>
+      <div class="row"><span class="mute">Cash available ₹</span><input class="field" type="number" id="cash" value="30000" style="width:130px"><button class="btn" onclick="doPlan()">Plan payments</button></div>
+      <div id="plan" style="padding-bottom:18px"></div>
+    </div>
+    <div class="step" id="st3">
+      <div class="num">3</div>
+      <div class="card-h" style="padding:16px 0 0"><h2>Approve the bundle</h2><span class="state"></span></div>
+      <div id="appr" style="padding-bottom:18px"><p class="mute">Make a plan first.</p></div>
+    </div>
+    <div class="step" id="st4">
+      <div class="num">4</div>
+      <div class="card-h" style="padding:16px 0 0"><h2>Payouts · Cashfree</h2><span class="state"></span></div>
+      <div class="row"><button class="btn ghost sm" onclick="post('/api/sweep').then(load)">Reconcile now</button><span class="mute" style="font-size:12px">Auto-sweep every 60 s · API 200 = submitted, not paid</span></div>
+      <div id="pay"></div>
+    </div>
+  </div></div>
 </section>
 </main>
-<div id="toast"></div>
+<div id="toast" role="status"></div>
+<div id="viz" aria-live="polite"><div class="orb"><span id="vizicon"></span></div>
+  <div class="lbl" id="vizlbl">Bulbul<small>speaking</small></div><canvas id="vizc" width="440" height="80"></canvas>
+  <button title="Stop" onclick="vizStop(true)">✕</button></div>
+
 <script>
-let S=null, sel=null, cbSession=null, rec=null, chunks=[];
+let S=null, sel=null, cbSession=null, rec=null, chunks=[], curLang='hi';
 const $=id=>document.getElementById(id);
-const lang=()=>$('lang').value;
+const lang=()=>curLang;
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const inr=v=>v==null?'—':Number(v).toLocaleString('en-IN');
-function toast(t){const e=$('toast');e.textContent=t;e.style.display='block';clearTimeout(e._t);e._t=setTimeout(()=>e.style.display='none',3500)}
+const IC={
+  block:'<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><path d="m5.6 5.6 12.8 12.8"/></svg>',
+  ask:'<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3 2 20h20L12 3z"/><path d="M12 10v4M12 17h.01"/></svg>',
+  info:'<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m5 12 5 5 9-10"/></svg>',
+  play:'<svg class="i" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>',
+  mic:'<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>',
+  phone:'<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg>',
+  lock:'<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>',
+  bell:'<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10 21h4"/></svg>',
+};
+function toast(t){const e=$('toast');e.innerHTML=IC.bell+'<div>'+esc(t)+'</div>';e.classList.add('show');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('show'),4000)}
 async function post(u,b,form){const r=await fetch(u,{method:'POST',headers:form?{}:{'Content-Type':'application/json'},body:form?b:JSON.stringify(b||{})});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.detail||r.status);return j}
 async function load(){S=await (await fetch('/api/state?lang='+lang())).json();render()}
+const initials=n=>String(n||'?').split(/\s+/).filter(w=>/^[A-Za-z]/.test(w)).slice(0,2).map(w=>w[0]).join('').toUpperCase()||'?';
+function daysLeft(d){if(!d||!S)return null;return Math.round((new Date(d)-new Date(S.today))/864e5)}
+function dueBadge(i){const n=daysLeft(i.deadline);if(n==null)return '<span class="due cool">no MSME deadline</span>';
+  const cls=n<=2?'hot':n<=5?'warm':'cool';return `<span class="due ${cls}">${n<0?Math.abs(n)+' days late':n===0?'due today':n+' day'+(n>1?'s':'')+' left'}</span>`}
+
 function render(){
   $('today').textContent='· today '+S.today;
-  $('mode').textContent='Payouts: '+S.payout_mode+' · '+S.payout_base.replace('https://','')+(S.verification_last_error?' · Secure ID: fixtures ('+S.verification_last_error+')':' · Secure ID: live');
-  $('rows').innerHTML=S.invoices.map(i=>`<tr class="row ${sel===i.id?'sel':''}" onclick="pick('${i.id}')">
-   <td><b>${i.id}</b></td><td>${esc(i.vendor)}<div class="native">${i.vendor_native!==i.vendor?esc(i.vendor_native)+' · ':''}${esc(i.number)} · ${i.language}</div></td>
-   <td class="num">${inr(i.total)}</td><td>${i.deadline?esc(i.deadline):'<span class="mute">none</span>'}<div class="native">${esc(i.enterprise_type||'')}</div></td>
-   <td><span class="tag">${i.lane}</span></td><td><span class="chip ${i.outcome}">${i.outcome}</span><div class="native">${i.codes.join(', ')}</div></td><td>${i.payment}</td></tr>`).join('');
+  const sim=S.payout_mode!=='live', fx=!!S.verification_last_error;
+  $('mode').innerHTML=`<span class="dot ${sim||fx?'warn':''}"></span>Payouts ${esc(S.payout_mode)} · Secure ID ${fx?'fixtures':'live'}`;
+  $('mode').title=S.payout_base+(fx?' · '+S.verification_last_error:'');
+  renderStats();
+  $('rows').innerHTML=S.invoices.map(i=>`<tr class="bill ${sel===i.id?'sel':''}" onclick="pick('${i.id}')">
+   <td><div class="who"><div class="av ${i.outcome}">${esc(i.id)}</div><div style="min-width:0"><div class="n">${esc(i.vendor)}</div>
+     <div class="s">${i.vendor_native!==i.vendor?esc(i.vendor_native)+' · ':''}${esc(i.number)}</div>
+     ${i.lane!=='KNOWN'?`<span class="tag lane-${i.lane}" style="margin-top:3px">${i.lane.replace('_',' ').toLowerCase()}</span>`:''}</div></div></td>
+   <td class="amt">${inr(i.total)}</td>
+   <td>${dueBadge(i)}<div class="codes">${esc(i.enterprise_type||'')}</div></td>
+   <td><span class="chip ${i.outcome}">${i.outcome}</span>${i.codes.length?`<div class="codes">${i.codes.join(', ')}</div>`:''}</td>
+   <td class="paystate">${esc(i.payment.replace('_',' '))}</td></tr>`).join('');
   if(sel)showDetail(sel);
-  renderScore();renderPlan();renderPay();
+  renderScore();renderPlan();renderPay();renderSteps();
   const f=S.invoices.find(i=>i.lane==='CHANGED_ACCOUNT'&&i.outcome!=='BLOCK');
-  if(!cbSession&&f)$('cb').innerHTML=`<p>Bill <b>${f.id}</b> (${esc(f.vendor)}) asks us to pay a <b>new account xx${f.account_last4}</b>. Payments to this vendor are frozen.</p><button onclick="startCb('${f.id}')">Call vendor on the number on file</button>`;
+  if(!cbSession)$('cb').innerHTML=f?`<div class="reason ask" style="margin-top:12px"><div class="ic">${IC.ask}</div><div class="body">Bill <b>${f.id}</b> · ${esc(f.vendor)} asks us to pay a <b>new account xx${f.account_last4}</b>. Payments to this vendor are frozen.</div></div>
+    <button class="btn" onclick="startCb('${f.id}')">${IC.phone}Call vendor on the number on file</button>`:`<p class="mute">No changed accounts waiting.</p>`;
 }
-function pick(id){sel=id;render()}
+function renderStats(){
+  const by=o=>S.invoices.filter(i=>i.outcome===o), sum=a=>a.reduce((s,i)=>s+Number(i.total),0);
+  const all=S.invoices, pay=[...by('PAY'),...by('DEFER')], ask=by('ASK'), blk=by('BLOCK');
+  const card=(cls,k,v,s)=>`<div class="stat ${cls}"><div class="k">${k}</div><div class="v">${v}</div><div class="s">${s}</div></div>`;
+  $('stats').innerHTML=card('','Bills this week',all.length,'₹'+inr(sum(all)))+card('g','Ready to pay',pay.length,'₹'+inr(sum(pay)))+
+    card('a','Needs you',ask.length,ask.map(i=>i.id).join(', ')||'nothing waiting')+card('r','Stopped',blk.length,'₹'+inr(sum(blk))+' not sent');
+}
+function renderSteps(){
+  const cbPending=S.invoices.some(i=>i.lane==='CHANGED_ACCOUNT'&&i.outcome==='ASK');
+  const b=S.plan&&S.plan.bundle, paid=S.invoices.some(i=>i.payouts.length);
+  const st=[cbPending?'active':'done', S.plan?'done':'active', !b?'wait':(b.status==='approved'||b.status==='used')?'done':'active', paid?'done':(b&&b.status==='approved')?'active':'wait'];
+  const label={done:'done',active:'now',wait:'waiting'};
+  st.forEach((s,k)=>{const el=$('st'+(k+1));el.className='step '+(s==='wait'?'':s);el.querySelector('.state').textContent=label[s]});
+}
+function pick(id){sel=id;render();if(innerWidth<1080)$('detail').scrollIntoView({behavior:'smooth',block:'start'})}
 function showDetail(id){
   const i=S.invoices.find(x=>x.id===id);
   const key=JSON.stringify(i)+lang();if(window._dKey===key)return;window._dKey=key;
-  $('detail').innerHTML=`<h2>Bill ${i.id} · ${esc(i.vendor)} <span class="chip ${i.outcome}">${i.outcome}</span></h2>
-  <div class="row2"><span class="tag">${i.lane}</span><span class="tag">account xx${i.account_last4} · ${esc(i.ifsc)}</span><span class="tag">${esc(i.file)}</span></div>
-  ${i.reasons.map(r=>`<div class="reason ${r.severity}"><b>${r.code}</b><button class="ghost" style="float:right;padding:2px 8px" onclick='say(${JSON.stringify(r.text)})'>▶</button><div>${esc(r.text)}</div></div>`).join('')}
-  <details><summary>Evidence (native extraction, checks)</summary><pre>${esc(JSON.stringify({raw_native:i.raw_native,reasons:i.reasons.map(r=>({code:r.code,evidence:r.evidence}))},null,2))}</pre></details>`;
+  $('detail').innerHTML=`<div class="card-h"><div class="av ${i.outcome}">${esc(i.id)}</div><div style="min-width:0"><h2>${esc(i.vendor)}</h2><div class="mute" style="font-size:12px">${esc(i.vendor_native)} · ${esc(i.number)}</div></div><span class="sp"></span><span class="chip ${i.outcome}">${i.outcome}</span></div>
+  <div class="card-b">
+  <div class="row" style="margin-top:0"><span class="tag lane-${i.lane}">${i.lane.replace('_',' ').toLowerCase()}</span><span class="tag">₹${inr(i.total)}</span><span class="tag">a/c xx${i.account_last4} · ${esc(i.ifsc)}</span>${dueBadge(i)}<span class="tag">${esc(i.file)}</span></div>
+  ${i.reasons.map(r=>`<div class="reason ${r.severity}"><div class="ic">${IC[r.severity]||IC.info}</div><div class="body"><div class="code">${r.code}</div><div>${esc(r.text)}</div></div>
+    <button class="btn ghost sm" title="Hear it (Bulbul)" onclick='say(${JSON.stringify(r.text)})'>${IC.play}</button></div>`).join('')}
+  <details><summary>Evidence · native extraction and checks</summary><pre>${esc(JSON.stringify({raw_native:i.raw_native,reasons:i.reasons.map(r=>({code:r.code,evidence:r.evidence}))},null,2))}</pre></details></div>`;
 }
 // Bulbul playback: cache each clip (replays are instant, no second TTS call) and stop the
 // previous clip so repeated clicks never play on top of each other.
@@ -143,43 +335,93 @@ async function sayIn(text,l){
     if(!_tts[k]){_tts[k]=(async()=>{const r=await fetch('/api/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,lang:l})});
       if(!r.ok)throw new Error((await r.json()).detail);return URL.createObjectURL(await r.blob())})();
       _tts[k].catch(()=>delete _tts[k])}
+    vizShow('speak','Bulbul','preparing voice…');
     const url=await _tts[k];
     if(_audio){_audio.pause();_audio.currentTime=0}
-    _audio=new Audio(url);await _audio.play()
-  }catch(e){toast('Voice unavailable: '+e.message)}}
+    _audio=new Audio(url);
+    const a=_audio;a.onended=a.onpause=()=>{if(_audio===a)vizStop()};
+    vizAttach(a);await a.play();vizShow('speak','Bulbul',{hi:'बोल रहा है',ta:'பேசுகிறது',en:'speaking'}[l]||'speaking')
+  }catch(e){vizStop();toast('Voice unavailable: '+e.message)}}
+
+/* ── voice visualizer ─────────────────────────────────────
+   Real frequency data from Web Audio: Bulbul's playback, or the mic while recording.
+   Mirrored rounded bars in Sarvam orange→blue; idles as a soft wave while audio loads. */
+let _ac=null,_an=null,_src=null,_raf=0,_vizMode=null;
+function _ctx(){if(!_ac)_ac=new (window.AudioContext||window.webkitAudioContext)();if(_ac.state==='suspended')_ac.resume();return _ac}
+function _analyser(){const ac=_ctx();if(!_an){_an=ac.createAnalyser();_an.fftSize=128;_an.smoothingTimeConstant=.78}return _an}
+function vizAttach(audioEl){try{const ac=_ctx(),an=_analyser();if(_src)try{_src.disconnect()}catch(e){}
+  _src=ac.createMediaElementSource(audioEl);_src.connect(an);an.connect(ac.destination)}catch(e){/* visual only; sound still plays */}}
+function vizAttachStream(stream){try{const ac=_ctx(),an=_analyser();if(_src)try{_src.disconnect()}catch(e){}
+  try{an.disconnect()}catch(e){}_src=ac.createMediaStreamSource(stream);_src.connect(an)}catch(e){}}   // mic: analyse only, never play back
+function vizShow(mode,title,sub){const v=$('viz');_vizMode=mode;v.className='on'+(mode==='mic'?' mic':'');
+  $('vizlbl').innerHTML=`${esc(title)}<small>${esc(sub)}</small>`;$('vizicon').innerHTML=mode==='mic'?IC.mic:IC.play;
+  if(!_raf)_draw()}
+function vizStop(hard){$('viz').className='';_vizMode=null;cancelAnimationFrame(_raf);_raf=0;
+  if(hard){if(_audio){_audio.pause()}if(rec&&rec.state==='recording'){const b=document.querySelector('.rec-on');if(b)stopRec(b)}}}
+function _draw(){const c=$('vizc'),g=c.getContext('2d'),W=c.width,H=c.height,N=28,gap=4,bw=(W-gap*(N-1))/N;
+  const data=new Uint8Array(64);const t=performance.now()/1000;
+  if(_an)_an.getByteFrequencyData(data);
+  const live=data.some(x=>x>6);
+  g.clearRect(0,0,W,H);
+  const grad=g.createLinearGradient(0,0,W,0);
+  if(_vizMode==='mic'){grad.addColorStop(0,'#c2344a');grad.addColorStop(1,'#ff8a9a')}
+  else{grad.addColorStop(0,'#d5650f');grad.addColorStop(.5,'#eaaf1c');grad.addColorStop(1,'#556adc')}
+  g.fillStyle=grad;
+  for(let k=0;k<N;k++){
+    const mirror=Math.abs(k-(N-1)/2)/((N-1)/2);                       // centre bars tallest
+    const bin=Math.min(63,Math.floor((1-mirror)*40)+2);
+    let v=live?data[bin]/255:(.18+.12*Math.sin(t*3+k*.55));           // idle: gentle wave
+    v=Math.max(.08,Math.min(1,v*(1.15-mirror*.5)));
+    const h=v*H, x=k*(bw+gap), y=(H-h)/2, r=Math.min(bw/2,h/2);
+    g.beginPath();g.roundRect?g.roundRect(x,y,bw,h,r):g.rect(x,y,bw,h);g.fill();
+  }
+  _raf=requestAnimationFrame(_draw)}
 async function say(text){return sayIn(text,lang())}
-async function startRec(btn){try{const st=await navigator.mediaDevices.getUserMedia({audio:true});chunks=[];rec=new MediaRecorder(st);rec.ondataavailable=e=>chunks.push(e.data);rec.start();btn.textContent='■ Stop';btn.onclick=()=>stopRec(btn)}catch(e){toast('Mic unavailable: '+e.message)}}
-function stopRec(btn){return new Promise(res=>{if(!rec||rec.state!=='recording'){res();return}rec.onstop=()=>{rec.stream.getTracks().forEach(t=>t.stop());btn._blob=new Blob(chunks,{type:'audio/webm'});btn.textContent='● Re-record';btn.onclick=()=>startRec(btn);toast('Recorded. Now submit.');res()};rec.stop()})}
+async function startRec(btn){try{const st=await navigator.mediaDevices.getUserMedia({audio:true});chunks=[];rec=new MediaRecorder(st);rec.ondataavailable=e=>chunks.push(e.data);rec.start();
+  if(_audio)_audio.pause();vizAttachStream(st);vizShow('mic',{hi:'सुन रहे हैं',ta:'கேட்கிறது',en:'Listening'}[lang()]||'Listening','speak now · Saaras');
+  btn._label=btn._label||btn.innerHTML;btn.innerHTML='■ Stop recording';btn.classList.add('rec-on');btn.onclick=()=>stopRec(btn)}catch(e){toast('Mic unavailable: '+e.message)}}
+function stopRec(btn){return new Promise(res=>{if(!rec||rec.state!=='recording'){res();return}rec.onstop=()=>{rec.stream.getTracks().forEach(t=>t.stop());vizStop();btn._blob=new Blob(chunks,{type:'audio/webm'});
+  btn.classList.remove('rec-on');btn.innerHTML=IC.mic+'Re-record';btn.onclick=()=>startRec(btn);toast('Recorded. Now check it.');res()};rec.stop()})}
 async function startCb(id){try{cbSession=await post(`/api/invoices/${id}/callback`);renderCb()}catch(e){toast(e.message)}}
 function renderCb(res){
   const s=cbSession;
-  $('cb').innerHTML=`<p>Calling <b>${esc(s.phone_used)}</b> (vendor master). <span class="mute">Number printed on the invoice (${esc(s.invoice_phone_ignored||'none')}) is ignored.</span></p>
-  <div class="reason info">${esc(s.prompt)} <button class="ghost" style="padding:2px 8px" onclick='sayIn(${JSON.stringify(s.prompt)},"${s.lang}")'>▶ Bulbul</button></div>
-  ${res?'':`<div class="row2"><button class="ghost" id="cbmic" onclick="startRec(this)">● Record vendor reply</button><input type="text" id="cbtxt" placeholder="or type what the vendor said" style="flex:1"><button id="cbsubmit" onclick="finishCb()">Submit</button></div>`}
-  ${res?`<div class="reason ${res.passed?'info':res.severity}"><b>${res.passed?'CALLBACK_CONFIRMED':res.code}</b> ${res.passed?'· vendor confirmed the new account':(res.code==='CALLBACK_NO_ANSWER'?'· not confirmed, call again':'· digits do not match, bill blocked')}
-   <div class="mute">vendor said <b>${esc(res.evidence.spoken_last4||'—')}</b> · invoice account ends <b>${esc(res.evidence.invoice_account_last4)}</b> · transcript “${esc((res.evidence.transcript||'').trim())}”</div></div>
-   ${res.passed?`<div class="row2">Approve account change: <input type="password" id="acpin" placeholder="PIN" style="width:90px"><button onclick="approveAcct('${s.invoice_id}')">Approve change</button></div>`:''}
-   <div class="row2"><button class="ghost" onclick="nextCb()">Call another vendor</button></div>`:''}`;
+  $('cb').innerHTML=`<div class="row" style="margin-top:12px"><span class="tag">${IC.phone} calling ${esc(s.phone_used)} · vendor master</span><span class="tag" style="text-decoration:line-through;opacity:.7">invoice no. ${esc(s.invoice_phone_ignored||'none')}</span></div>
+  <div class="prompt"><button class="btn sm" title="Play (Bulbul)" onclick='sayIn(${JSON.stringify(s.prompt)},"${s.lang}")'>${IC.play}</button><div>${esc(s.prompt)}</div></div>
+  ${res?'':`<div class="row"><button class="btn ghost" id="cbmic" onclick="startRec(this)">${IC.mic}Record vendor reply</button><input class="field" type="text" id="cbtxt" placeholder="or type what the vendor said" style="flex:1;min-width:160px"><button class="btn" id="cbsubmit" onclick="finishCb()">Submit</button></div>`}
+  ${res?`<div class="reason ${res.passed?'info':res.severity}"><div class="ic">${IC[res.passed?'info':res.severity]}</div><div class="body"><div class="code">${res.passed?'CALLBACK_CONFIRMED':res.code}</div>
+     <div>${res.passed?'Vendor confirmed the new account.':(res.code==='CALLBACK_NO_ANSWER'?'Not confirmed. Call again.':'Digits do not match. Bill blocked.')}</div>
+     <div class="mute" style="font-size:12.5px">vendor said <b>${esc(res.evidence.spoken_last4||'—')}</b> · invoice account ends <b>${esc(res.evidence.invoice_account_last4)}</b> · “${esc((res.evidence.transcript||'').trim())}”</div></div></div>
+   ${res.passed?`<div class="lock"><span class="lbl">${IC.lock}Approve account change</span><input class="field" type="password" id="acpin" placeholder="PIN" style="width:100px"><button class="btn" onclick="approveAcct('${s.invoice_id}')">Approve</button></div>`:''}
+   <div class="row"><button class="btn ghost sm" onclick="nextCb()">Call another vendor</button></div>`:''}`;
 }
-function nextCb(){cbSession=null;$('cb').innerHTML='';render()}
+function nextCb(){cbSession=null;render()}
 async function finishCb(){const btn=$('cbsubmit');if(btn)btn.disabled=true;   // one answer per call
-  const fd=new FormData();const b=$('cbmic')._blob;if(b)fd.append('audio',b,'reply.webm');else fd.append('transcript',$('cbtxt').value);
+  const mic=$('cbmic');if(rec&&rec.state==='recording'&&mic)await stopRec(mic);
+  const fd=new FormData();const b=mic&&mic._blob;if(b)fd.append('audio',b,'reply.webm');else fd.append('transcript',$('cbtxt').value);
   try{const r=await post(`/api/callbacks/${cbSession.id}/result`,fd,true);renderCb(r);await load();renderCb(r)}catch(e){if(btn)btn.disabled=false;toast(e.message)}}
 async function approveAcct(id){const r=await post(`/api/invoices/${id}/approve-account`,{pin:$('acpin').value});toast(r.ok?'Account added to vendor master (provenance: call-back)':r.reasons.join(', '));load()}
 async function doPlan(){try{await post('/api/plan',{cash:$('cash').value,lang:lang()});await load()}catch(e){toast(e.message)}}
 function renderPlan(){const p=S.plan;if(!p){$('plan').innerHTML='';return}
-  $('plan').innerHTML=`<div class="row2"><div><div class="mute">Pay now</div><div class="big">${p.chosen.join(' + ')||'—'}</div></div><div style="margin-left:24px"><div class="mute">Deduction protected</div><div class="big ok">₹${inr(p.protected)}</div></div><div style="margin-left:24px"><div class="mute">Naive (earliest first: ${p.naive_chosen.join('+')})</div><div class="big bad">₹${inr(p.naive_protected)}</div></div></div>
-  <div class="mute">Deferred: ${p.deferred.join(', ')||'none'} · MSME 43B(h): micro/small paid within 15 days (or agreed ≤45)</div>`;
+  const by=Object.fromEntries(S.invoices.map(i=>[i.id,i]));
+  const chip=(id,d)=>{const i=by[id];return i?`<span class="b ${d?'def':''}"><span class="av ${d?'DEFER':'PAY'}">${id}</span>₹${inr(i.total)}</span>`:''};
+  const max=Math.max(Number(p.protected),Number(p.naive_protected),1);
+  $('plan').innerHTML=`<div class="mute" style="font-size:12px;margin-top:6px">Pay now</div><div class="pick">${p.chosen.map(id=>chip(id,false)).join('')||'—'}</div>
+   ${p.deferred.length?`<div class="mute" style="font-size:12px">Deferred · cash ran out</div><div class="pick">${p.deferred.map(id=>chip(id,true)).join('')}</div>`:''}
+   <div class="cmp"><div class="r"><span><b>This plan</b> · ${p.chosen.join('+')}</span><div class="track"><div class="fill" style="width:${100*p.protected/max}%"></div></div><span class="val ok">₹${inr(p.protected)}</span></div>
+   <div class="r"><span class="mute">Earliest first · ${p.naive_chosen.join('+')}</span><div class="track"><div class="fill n" style="width:${100*p.naive_protected/max}%"></div></div><span class="val mute">₹${inr(p.naive_protected)}</span></div></div>
+   <div class="mute" style="font-size:11.5px;margin-top:8px">Tax deduction protected · MSME 43B(h): micro/small paid within 15 days (or agreed ≤ 45)</div>`;
   const b=p.bundle;
   const key=b.id+b.status+lang();if(window._apKey===key)return;window._apKey=key;
-  const say_line=sayThis(b);
-  $('appr').innerHTML=`<div class="reason info">${esc(b.prompt)} <button class="ghost" style="padding:2px 8px" onclick='say(${JSON.stringify(b.prompt)})'>▶ Bulbul</button></div>
-  <div class="saythis"><div class="mute">Step 1 · Say this (yes, bill count, total, code)</div><div class="line">${esc(say_line)}</div>
-   <div class="code">${b.code.split('').map(d=>`<span>${d}</span>`).join('')}</div></div>
-  <div class="mono mute">bundle ${b.id} · hash ${b.hash.slice(0,16)}… · ${b.count} bills ₹${inr(b.total)} · expires ${b.expires_at.slice(11)} · <b>${b.status}</b></div>
-  <div class="row2"><button class="ghost" id="apmic" onclick="startRec(this)">● Speak approval</button><input type="text" id="aptxt" placeholder="or type: ${esc(say_line)}" style="flex:1"><button onclick="voiceOk('${b.id}','voice')">Check</button><button class="ghost" onclick="voiceOk('${b.id}','typed')">Typed code only</button></div>
+  const say_line=sayThis(b), locked=b.status==='approved'||b.status==='used';
+  $('appr').innerHTML=`<div class="prompt" style="margin-top:12px"><button class="btn sm" title="Play (Bulbul)" onclick='say(${JSON.stringify(b.prompt)})'>${IC.play}</button><div>${esc(b.prompt)}</div></div>
+  <div class="saythis"><div class="k">Step A · Say this</div><div class="line">${esc(say_line)}</div><div class="digits">${b.code.split('').map(d=>`<span>${d}</span>`).join('')}</div></div>
+  <div class="row"><button class="btn ghost" id="apmic" onclick="startRec(this)" ${locked?'disabled':''}>${IC.mic}Speak approval</button><input class="field" type="text" id="aptxt" placeholder="or type: ${esc(say_line)}" style="flex:1;min-width:160px" ${locked?'disabled':''}>
+   <button class="btn" onclick="voiceOk('${b.id}','voice')" ${locked?'disabled':''}>Check</button><button class="btn ghost sm" onclick="voiceOk('${b.id}','typed')" ${locked?'disabled':''}>Typed code only</button></div>
   <div id="apres"></div>
-  <div class="row2"><span class="mute">Step 2 · PIN tap (the authority)</span> <input type="password" id="pin" style="width:90px" placeholder="PIN"><button onclick="pinOk('${b.id}')" ${b.status==='voice_ok'?'':'disabled'}>Confirm PIN</button><button class="pay" onclick="execute('${b.id}')" ${b.status==='approved'?'':'disabled'}>Pay via Cashfree</button></div>`;
+  <div class="lock"><span class="lbl">${IC.lock}Step B · PIN tap (the authority)</span><input class="field" type="password" id="pin" style="width:100px" placeholder="PIN" ${b.status==='voice_ok'?'':'disabled'}>
+   <button class="btn" onclick="pinOk('${b.id}')" ${b.status==='voice_ok'?'':'disabled'}>Confirm PIN</button>
+   <button class="btn pay" onclick="execute('${b.id}')" ${b.status==='approved'?'':'disabled'}>Pay ₹${inr(b.total)} via Cashfree</button></div>
+  <div class="meta">bundle ${b.id} · hash ${b.hash.slice(0,16)}… · ${b.count} bills · expires ${b.expires_at.slice(11)} · <b>${b.status}</b></div>`;
 }
 // The exact sentence the owner says: count before total (Saaras merges "22,000, do bill" into "22002").
 function sayThis(b){const c=b.code.split('').join('-'),n=b.count,t=inr(b.total);
@@ -189,27 +431,35 @@ async function voiceOk(id,ch){
   const fd=new FormData();const b=mic&&mic._blob;if(b&&ch==='voice')fd.append('audio',b,'approve.webm');else fd.append('transcript',$('aptxt').value);fd.append('channel',ch);fd.append('lang',lang());
   try{const r=await post(`/api/bundles/${id}/approve`,fd,true);await load();
     const part=(ok,name)=>`<span class="tick ${ok?'y':'n'}">${ok?'✓':'✗'} ${name}</span>`;
-    $('apres').innerHTML=`<div class="reason ${r.ok?'info':'block'}">${r.ok?'Confirmed. Now tap your PIN.':'Not confirmed. Say the full line above.'}
-     <div class="row2">${part(r.yes_ok,'yes')}${part(r.count_ok,'bill count')}${part(r.total_ok,'total')}${part(r.code_ok,'code')}</div>
-     <div class="mute">heard: “${esc(r.transcript)}”</div></div>`}catch(e){toast(e.message)}}
+    $('apres').innerHTML=`<div class="reason ${r.ok?'info':'block'}"><div class="ic">${IC[r.ok?'info':'block']}</div><div class="body"><b>${r.ok?'Confirmed. Now tap your PIN.':'Not confirmed. Say the full line above.'}</b>
+     <div class="ticks">${part(r.yes_ok,'yes')}${part(r.count_ok,'bill count')}${part(r.total_ok,'total')}${part(r.code_ok,'code')}</div>
+     <div class="mute" style="font-size:12.5px;margin-top:4px">heard: “${esc(r.transcript)}”</div></div></div>`}catch(e){toast(e.message)}}
 async function pinOk(id){const r=await post(`/api/bundles/${id}/pin`,{pin:$('pin').value});toast(r.ok?'Approved: bound to bundle hash, single use':'Refused: '+r.reasons.join(', '));load()}
 async function execute(id){try{await post(`/api/bundles/${id}/execute`);toast('Submitted to Cashfree');load()}catch(e){toast(e.message)}}
 function renderPay(){const ps=S.invoices.flatMap(i=>i.payouts.map(p=>({...p,vendor:i.vendor})));
-  $('pay').innerHTML=ps.length?`<table><tr><th>Bill</th><th>transfer_id</th><th>State</th><th></th></tr>${ps.map(p=>`<tr><td><b>${p.invoice_id}</b> ₹${inr(p.amount)}</td><td class="mono">${p.transfer_id}${p.simulated?' <span class="tag">SIMULATED</span>':''}<div class="native">cf ${esc(p.cf_transfer_id||'—')} · ${esc(p.status_code||'')}</div></td><td><span class="chip ${p.state==='SUCCESS'?'PAY':p.state==='REVERSED'||p.state==='FAILED'||p.state==='REJECTED'?'BLOCK':'ASK'}">${p.state}</span></td>
-   <td>${p.state==='SUCCESS'?`<button class="ghost" style="padding:2px 8px" onclick="simRev('${p.transfer_id}')">Simulate reversal webhook</button>`:''}</td></tr>`).join('')}</table>`:'<p class="mute">No payouts yet.</p>';
+  const cls=s=>s==='SUCCESS'?'PAY':['REVERSED','FAILED','REJECTED'].includes(s)?'BLOCK':'ASK';
+  $('pay').innerHTML=ps.length?`<div class="tl">${ps.map(p=>`<div class="p"><div class="av ${cls(p.state)}">${p.invoice_id}</div>
+    <div style="min-width:0"><b>${esc(p.vendor)}</b> · ₹${inr(p.amount)} ${p.simulated?'<span class="tag">simulated</span>':''}<div class="tid">${p.transfer_id} · cf ${esc(p.cf_transfer_id||'—')} ${esc(p.status_code||'')}</div></div>
+    <div style="text-align:right"><span class="chip ${cls(p.state)}">${p.state}</span>${p.state==='SUCCESS'&&p.simulated?`<div><button class="btn ghost sm" style="margin-top:6px" onclick="simRev('${p.transfer_id}')">Simulate reversal</button></div>`:''}</div></div>`).join('')}</div>`
+    :'<p class="mute" style="margin:6px 0 0">No payouts yet.</p>';
   S.events.filter(e=>e.kind==='payout').slice(-3).forEach(e=>{if(!window._seen)window._seen={};const k=e.at+e.invoice+e.state;if(!_seen[k]){_seen[k]=1;toast(e.text)}})}
-async function simRev(tid){const r=await post('/api/simulate/webhook',{transfer_id:tid,status:'REVERSED'});toast('Signed webhook → '+JSON.stringify(r));load()}
+async function simRev(tid){try{const r=await post('/api/simulate/webhook',{transfer_id:tid,status:'REVERSED'});toast('Reversal webhook applied: '+(r.state||JSON.stringify(r)))}catch(e){toast(e.message)}load()}
 function renderScore(){const s=S.scoreboard;
-  $('score').innerHTML=`<div class="kpis"><div class="kpi"><div class="mute">Traps blocked</div><div class="v">${s.traps_blocked.length}/${s.traps}</div><div class="native">${s.traps_blocked.join(', ')}${s.traps_held_ask.length?' · held (ASK): '+s.traps_held_ask.join(', '):''}</div></div>
-  <div class="kpi"><div class="mute">Clean auto-paid</div><div class="v">${s.clean_auto_paid.length}/${s.clean}</div><div class="native">${s.clean_auto_paid.join(', ')}</div></div>
-  <div class="kpi"><div class="mute">Clean falsely held</div><div class="v">${s.clean_falsely_held.length}</div><div class="native">false blocks: ${s.clean_false_blocks.length}</div></div></div><p class="mute">${esc(s.claim)}</p>`}
+  const k=(t,v,sub)=>`<div class="kpi"><div class="k">${t}</div><div class="v">${v}</div><div class="s">${sub}</div></div>`;
+  $('score').innerHTML=`<div class="kpis">${k('Traps blocked',`${s.traps_blocked.length}/${s.traps}`,(s.traps_blocked.join(', ')||'none')+(s.traps_held_ask.length?' · held: '+s.traps_held_ask.join(', '):''))}
+   ${k('Clean auto-paid',`${s.clean_auto_paid.length}/${s.clean}`,s.clean_auto_paid.join(', ')||'none')}${k('Clean falsely held',s.clean_falsely_held.length,'false blocks: '+s.clean_false_blocks.length)}</div>
+   <span class="claim">${IC.info}${esc(s.claim)}</span>`}
 async function tab(b){document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b));$('score').style.display=b.dataset.t==='score'?'':'none';$('audit').style.display=b.dataset.t==='audit'?'':'none';
-  if(b.dataset.t==='audit'){const a=await (await fetch('/api/audit')).json();$('audit').innerHTML=`<p>Hash chain: <b class="${a.chain_ok?'ok':'bad'}">${a.chain_ok?'intact':'BROKEN'}</b> · ${a.entries.length} entries</p><pre class="mono" style="max-height:320px;overflow:auto;white-space:pre-wrap">${esc(a.entries.slice().reverse().map(e=>`#${e.id} ${e.at} ${e.actor} ${e.action} ${e.entity||''} ${JSON.stringify(e.payload)}  ${e.hash.slice(0,10)}`).join('\n'))}</pre>`}}
+  if(b.dataset.t==='audit'){const a=await (await fetch('/api/audit')).json();$('audit').innerHTML=`<p>Hash chain: <b class="${a.chain_ok?'ok':'bad'}">${a.chain_ok?'intact':'BROKEN'}</b> · ${a.entries.length} entries</p><pre class="mono audit-pre">${esc(a.entries.slice().reverse().map(e=>`#${e.id} ${e.at} ${e.actor} ${e.action} ${e.entity||''} ${JSON.stringify(e.payload)}  ${e.hash.slice(0,10)}`).join('\n'))}</pre>`}}
 async function uploadFiles(){const fs=$('files').files;if(!fs.length){toast('Pick invoice images or PDFs');return}
-  const fd=new FormData();for(const f of fs)fd.append('files',f,f.name);$('upst').textContent='Reading '+fs.length+' file(s)… (20-90 s per job)';
+  const fd=new FormData();for(const f of fs)fd.append('files',f,f.name);$('upst').textContent='Reading '+fs.length+' file(s) with Sarvam Vision…';
   try{const r=await post('/api/upload',fd,true);$('upst').textContent=r.results.map(x=>x.error?`${x.file}: ${x.error}`:`${x.file} → ${x.outcome} ${x.codes.join(',')}`).join(' · ');load()}catch(e){$('upst').textContent='Upload failed: '+e.message}}
-async function resetAll(){await post('/api/reset');cbSession=null;sel=null;window._apKey=null;window._dKey=null;$('appr').innerHTML='<p class="mute">Make a plan first.</p>';load()}
-$('lang').onchange=load;load();setInterval(load,2000);
+async function resetAll(){await post('/api/reset');cbSession=null;sel=null;window._apKey=null;window._dKey=null;$('appr').innerHTML='<p class="mute">Make a plan first.</p>';
+  $('detail').querySelector('.card-h')&&location.reload();load()}
+document.querySelectorAll('#langseg button').forEach(b=>b.onclick=()=>{curLang=b.dataset.l;document.documentElement.lang=curLang;
+  document.querySelectorAll('#langseg button').forEach(x=>x.classList.toggle('on',x===b));window._apKey=null;window._dKey=null;load()});
+fetch('/api/state?lang=hi').then(r=>r.json()).then(s=>{const l=s.owner_lang||'hi';const b=document.querySelector(`#langseg button[data-l="${l}"]`);if(b)b.click();else load()});
+setInterval(load,2000);
 </script>
 </body>
 </html>
