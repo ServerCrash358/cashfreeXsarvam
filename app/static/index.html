@@ -173,10 +173,11 @@ details pre{font-size:11px;white-space:pre-wrap;word-break:break-word;background
 #viz.mic .orb{background:conic-gradient(from 0deg,var(--block),#ff8a9a,var(--block))}
 #viz.mic .orb span{color:var(--block)}
 @keyframes spin{to{transform:rotate(360deg)}}#viz .orb span{animation:spin 3s linear infinite reverse}
-#viz canvas{width:220px;height:40px;display:block}
-#viz .lbl{font-size:12px;font-weight:700;color:var(--ink-2);min-width:96px}#viz .lbl small{display:block;font-weight:500;color:var(--mute)}
-#viz button{border:0;background:#f2f2f2;border-radius:999px;width:28px;height:28px;cursor:pointer;color:var(--ink-2)}
-@media(max-width:560px){#viz canvas{width:130px}#viz .lbl{min-width:0}}
+#viz{padding:8px 16px 8px 8px;background:#0d0f1cf2;border-color:#ffffff14;color:#fff}
+#viz canvas{width:84px;height:84px;display:block;margin:-18px 0 -18px -6px}
+#viz .lbl{font-size:13px;font-weight:700;color:#fff;min-width:110px}#viz .lbl small{display:block;font-weight:500;color:#ffffffa6}
+#viz button{border:0;background:#ffffff14;border-radius:999px;width:28px;height:28px;cursor:pointer;color:#fff}
+@media(max-width:560px){#viz .lbl{min-width:0}}
 @media(prefers-reduced-motion:reduce){#viz .orb,#viz .orb span{animation:none}#viz{transition:none}}
 
 @media(max-width:1080px){main{grid-template-columns:1fr}}
@@ -253,8 +254,8 @@ details pre{font-size:11px;white-space:pre-wrap;word-break:break-word;background
 </section>
 </main>
 <div id="toast" role="status"></div>
-<div id="viz" aria-live="polite"><div class="orb"><span id="vizicon"></span></div>
-  <div class="lbl" id="vizlbl">Bulbul<small>speaking</small></div><canvas id="vizc" width="440" height="80"></canvas>
+<div id="viz" aria-live="polite"><canvas id="vizc" width="168" height="168" aria-hidden="true"></canvas>
+  <div class="lbl" id="vizlbl">Bulbul<small>speaking</small></div><span id="vizicon" hidden></span>
   <button title="Stop" onclick="vizStop(true)">✕</button></div>
 
 <script>
@@ -358,23 +359,54 @@ function vizShow(mode,title,sub){const v=$('viz');_vizMode=mode;v.className='on'
   if(!_raf)_draw()}
 function vizStop(hard){$('viz').className='';_vizMode=null;cancelAnimationFrame(_raf);_raf=0;
   if(hard){if(_audio){_audio.pause()}if(rec&&rec.state==='recording'){const b=document.querySelector('.rec-on');if(b)stopRec(b)}}}
-function _draw(){const c=$('vizc'),g=c.getContext('2d'),W=c.width,H=c.height,N=28,gap=4,bw=(W-gap*(N-1))/N;
-  const data=new Uint8Array(64);const t=performance.now()/1000;
-  if(_an)_an.getByteFrequencyData(data);
-  const live=data.some(x=>x>6);
+/* Siri-sheet style orb (own canvas implementation): a dark glass sphere with a luminous
+   sheet of light inside. Ribbons swell with the live audio level; the rim splits colour. */
+let _lvl=0,_ph=0;
+const ORB_HUES={speak:['#d5650f','#eaaf1c','#bed2ff','#556adc'],mic:['#ff4d6d','#ff9ab0','#c2344a','#ffd1dc'],
+  wait:['#556adc','#bed2ff','#eaaf1c','#ffffff']};
+function _level(){if(!_an)return -1;const d=new Uint8Array(_an.fftSize);_an.getByteTimeDomainData(d);
+  let s=0;for(const v of d){const x=(v-128)/128;s+=x*x}const rms=Math.sqrt(s/d.length);return rms<.004?-1:Math.min(1,rms*4.5)}
+function _draw(){
+  const c=$('vizc'),g=c.getContext('2d'),W=c.width,H=c.height,cx=W/2,cy=H/2,R=W*.36;
+  const t=performance.now()/1000, raw=_level(), loading=$('vizlbl').textContent.includes('preparing');
+  const target=raw<0?(loading?.12:.22+.1*Math.sin(t*2.1)):raw;          // procedural when silent
+  _lvl+=(target-_lvl)*(target>_lvl?.35:.08);                             // fast attack, slow release
+  _ph+=(.015+.05*_lvl)*(loading?.5:1);
+  const hues=ORB_HUES[loading?'wait':(_vizMode==='mic'?'mic':'speak')];
   g.clearRect(0,0,W,H);
-  const grad=g.createLinearGradient(0,0,W,0);
-  if(_vizMode==='mic'){grad.addColorStop(0,'#c2344a');grad.addColorStop(1,'#ff8a9a')}
-  else{grad.addColorStop(0,'#d5650f');grad.addColorStop(.5,'#eaaf1c');grad.addColorStop(1,'#556adc')}
-  g.fillStyle=grad;
-  for(let k=0;k<N;k++){
-    const mirror=Math.abs(k-(N-1)/2)/((N-1)/2);                       // centre bars tallest
-    const bin=Math.min(63,Math.floor((1-mirror)*40)+2);
-    let v=live?data[bin]/255:(.18+.12*Math.sin(t*3+k*.55));           // idle: gentle wave
-    v=Math.max(.08,Math.min(1,v*(1.15-mirror*.5)));
-    const h=v*H, x=k*(bw+gap), y=(H-h)/2, r=Math.min(bw/2,h/2);
-    g.beginPath();g.roundRect?g.roundRect(x,y,bw,h,r):g.rect(x,y,bw,h);g.fill();
+  // outer glow
+  const glow=g.createRadialGradient(cx,cy,R*.6,cx,cy,R*1.35);glow.addColorStop(0,hues[0]+'55');glow.addColorStop(1,'#00000000');
+  g.fillStyle=glow;g.beginPath();g.arc(cx,cy,R*1.35,0,7);g.fill();
+  // glass body
+  g.save();g.beginPath();g.arc(cx,cy,R,0,7);g.clip();
+  const body=g.createRadialGradient(cx-R*.2,cy-R*.3,R*.1,cx,cy,R);body.addColorStop(0,'#1b1e36');body.addColorStop(1,'#04050b');
+  g.fillStyle=body;g.fillRect(cx-R,cy-R,2*R,2*R);
+  // luminous sheet: layered ribbons, additive light, tapered toward the rim
+  g.globalCompositeOperation='lighter';
+  const amp=R*(.1+.5*_lvl);
+  for(let k=0;k<4;k++){
+    const col=hues[k], f=1.4+k*.55, sp=1+k*.37, off=k*1.7;
+    for(const pass of [[R*.22,.10],[R*.07,.35],[R*.022,.95]]){            // soft sheet → bright filament
+      g.beginPath();
+      for(let i=0;i<=64;i++){const u=i/64*2-1, x=cx+u*R*1.02, env=Math.cos(u*Math.PI/2)**1.6;
+        const y=cy+env*amp*(Math.sin(u*f*Math.PI+_ph*sp+off)*.8+Math.sin(u*f*2.3-_ph*1.3+off)*.25)*(k%2?-1:1);
+        i?g.lineTo(x,y):g.moveTo(x,y)}
+      g.lineWidth=pass[0]*(.6+_lvl);g.strokeStyle=col;g.globalAlpha=pass[1]*(k===3?.7:1);g.lineCap='round';g.stroke();
+    }
   }
+  // white-hot core line
+  g.globalAlpha=.55+.4*_lvl;g.beginPath();
+  for(let i=0;i<=64;i++){const u=i/64*2-1,env=Math.cos(u*Math.PI/2)**2,x=cx+u*R;
+    const y=cy+env*amp*.55*Math.sin(u*1.8*Math.PI+_ph*1.2);i?g.lineTo(x,y):g.moveTo(x,y)}
+  g.lineWidth=R*.018;g.strokeStyle='#fff';g.stroke();
+  g.globalAlpha=1;g.globalCompositeOperation='source-over';
+  // specular highlight
+  const sp=g.createRadialGradient(cx-R*.42,cy-R*.5,0,cx-R*.42,cy-R*.5,R*.7);sp.addColorStop(0,'#ffffff40');sp.addColorStop(1,'#ffffff00');
+  g.fillStyle=sp;g.fillRect(cx-R,cy-R,2*R,2*R);g.restore();
+  // rim: thin ring with a colour split (chromatic offset)
+  g.lineWidth=W*.012;
+  [[hues[0],-1],[hues[2],1]].forEach(([col,d])=>{g.strokeStyle=col+'cc';g.beginPath();g.arc(cx+d*.9,cy,R-g.lineWidth/2,0,7);g.stroke()});
+  g.strokeStyle='#ffffff55';g.beginPath();g.arc(cx,cy,R-1,Math.PI*1.05,Math.PI*1.6);g.stroke();
   _raf=requestAnimationFrame(_draw)}
 async function say(text){return sayIn(text,lang())}
 async function startRec(btn){try{const st=await navigator.mediaDevices.getUserMedia({audio:true});chunks=[];rec=new MediaRecorder(st);rec.ondataavailable=e=>chunks.push(e.data);rec.start();
