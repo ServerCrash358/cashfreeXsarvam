@@ -91,7 +91,8 @@ class VerificationClient:
             res = {"account_status": "UNVERIFIABLE", "canned": True, "note": "not in sandbox test data"}
         else:
             res = {**fx, "canned": True, "live_error": self.last_error}
-        self._bank_cache[key] = res
+        if not self.live:          # in live mode a fallback is never cached: the next call retries Secure ID
+            self._bank_cache[key] = res
         return res
 
     def gstin(self, gstin: str, business_name: Optional[str] = None) -> dict:

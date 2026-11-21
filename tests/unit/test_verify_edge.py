@@ -104,3 +104,18 @@ def test_bank_cache_covers_unknown_accounts():
     a = c.bank("000000000000", "XXXX0000000")
     b = c.bank("000000000000", "XXXX0000000")
     assert a is b and a["account_status"] == "UNVERIFIABLE"
+
+
+def test_live_fallback_is_not_cached(monkeypatch):
+    """A failed live call (e.g. IP not whitelisted) must not pin the canned answer for the server's lifetime."""
+    from panch.cashfree import CashfreeUnavailable, VerificationClient
+    c = VerificationClient(live=True)
+    calls = {"n": 0}
+
+    def down(path, body):
+        calls["n"] += 1
+        raise CashfreeUnavailable("HTTP 403: IP not whitelisted")
+    monkeypatch.setattr(c, "_post", down)
+    assert c.bank("026291800001191", "YESB0000262", "John Doe")["canned"] is True
+    c.bank("026291800001191", "YESB0000262", "John Doe")
+    assert calls["n"] == 2 and c._bank_cache == {}
