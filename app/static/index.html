@@ -288,6 +288,9 @@ function render(){
   $('mode').innerHTML=`<span class="dot ${sim||fx?'warn':''}"></span>Payouts ${esc(S.payout_mode)} · Secure ID ${fx?'fixtures':'live'}`;
   $('mode').title=S.payout_base+(fx?' · '+S.verification_last_error:'');
   renderStats();
+  // rebuild rows only when something visible changed, so a click on a row is never swapped out mid-click
+  const rk=JSON.stringify(S.invoices.map(i=>[i.id,i.outcome,i.codes,i.payment,i.lane,i.deadline]))+sel+lang();
+  if(window._rowsKey!==rk){window._rowsKey=rk;
   $('rows').innerHTML=S.invoices.map(i=>`<tr class="bill ${sel===i.id?'sel':''}" onclick="pick('${i.id}')">
    <td><div class="who"><div class="av ${i.outcome}">${esc(i.id)}</div><div style="min-width:0"><div class="n">${esc(i.vendor)}</div>
      <div class="s">${i.vendor_native!==i.vendor?esc(i.vendor_native)+' · ':''}${esc(i.number)}</div>
@@ -295,7 +298,7 @@ function render(){
    <td class="amt">${inr(i.total)}</td>
    <td>${dueBadge(i)}<div class="codes">${esc(i.enterprise_type||'')}</div></td>
    <td><span class="chip ${i.outcome}">${i.outcome}</span>${i.codes.length?`<div class="codes">${i.codes.join(', ')}</div>`:''}</td>
-   <td class="paystate">${esc(i.payment.replace('_',' '))}</td></tr>`).join('');
+   <td class="paystate">${esc(i.payment.replace('_',' '))}</td></tr>`).join('');}
   if(sel)showDetail(sel);
   renderScore();renderPlan();renderPay();renderSteps();
   const f=S.invoices.find(i=>i.lane==='CHANGED_ACCOUNT'&&i.outcome!=='BLOCK');

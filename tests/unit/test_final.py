@@ -190,3 +190,10 @@ def test_reversed_bill_explains_the_reversal_not_ready_to_pay():
     reasons = e.explain("H", "en")
     assert reasons[0]["code"] == "PAYOUT_REVERSED" and "reversed" in reasons[0]["text"].lower()
     assert all(r["code"] != "OK" for r in reasons)
+
+
+def test_identifiers_are_not_comma_formatted_in_messages():
+    from panch.voice import render
+    t = render("account_changed", "en", invoice_account_last4="3142", known_accounts="xx8901")
+    assert "xx3142" in t and "3,142" not in t
+    assert "22,000" in render("approval_prompt", "en", count=2, total=D("22000"), code_spoken="1 2 3")

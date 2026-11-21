@@ -91,6 +91,10 @@ async def upload(files: list[UploadFile] = File(...)):
         dest.write_bytes(await f.read())
         try:
             inv = await asyncio.to_thread(read_invoice, dest)
+            if inv.total is None and not inv.lines and not inv.vendor_name_raw:
+                # nothing readable (not an invoice, or Vision failed): report it, don't add a blank bill
+                results.append({"file": name, "error": "could not read an invoice from this file"})
+                continue
             inv_id = engine.add_invoice(inv, name)
             v = engine.invoice_view(inv_id, engine.cfg["owner_lang"])
             results.append({"file": name, "id": inv_id, "outcome": v["outcome"], "codes": v["codes"]})

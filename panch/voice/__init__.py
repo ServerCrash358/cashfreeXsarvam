@@ -55,7 +55,9 @@ def render(message_key: str, lang: str = "en", **vars) -> str:
     class _Safe(dict):
         def __missing__(self, k):
             return "—"
-    return text.format_map(_Safe({k: _fmt(v) for k, v in vars.items()}))
+    # identifiers (account last four, invoice/GST numbers, codes) are shown as written, never comma-formatted
+    raw_keys = ("last4", "number", "gstin", "ifsc", "code", "known_accounts", "phone")
+    return text.format_map(_Safe({k: (str(v) if any(t in k for t in raw_keys) else _fmt(v)) for k, v in vars.items()}))
 
 
 def _client():
