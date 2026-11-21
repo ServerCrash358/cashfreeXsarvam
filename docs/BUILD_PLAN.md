@@ -11,6 +11,10 @@
 - **Duplicates:** fuzzy matches go to ASK; only identical economic content with the same date or delivery reference is BLOCK. GSTIN checksum is a soft flag (sandbox test GSTINs may fail a real checksum).
 - Claims softened: "zero false blocks on our clean controls, measured", never on the unseen batch.
 - Integration suites for the Cashfree test environment, Relay, the Sarvam SDK and end-to-end communication are in [INTEGRATION_TESTS.md](INTEGRATION_TESTS.md).
+- Build order P0-P3 (ARCHITECTURE section 0); three vendor lanes incl. `NEW_VENDOR`; three scoreboard metrics; hash-chain audit is the first cut.
+- Sarvam guidance adopted: extract with a fixed schema, never translate before matching, transliterate vendor names only, keep native text as evidence, respect page caps. Not adopted: Sarvam chat model for explanations (team rule).
+- From the feature review: GSTIN checksum stays soft; invoice numbers keep the financial year; PIN tap authorises (voice never alone); second approver above a threshold; ledger caps cumulative paid at the invoice amount; reconciliation sweep.
+- **Open desk questions** (also in SYSTEM.md section 7): is Relay required and is a live call required for PS3; does ASK count as caught on traps and as a hold on clean invoices.
 **One line:** an invoice-to-payout agent for Problem Statement 3 that treats every invoice as a claim, pays only what survives a deterministic gate, plans payments under limited cash and legal deadlines, never double-pays, and shows a live scoreboard of traps caught versus good invoices wrongly blocked.
 
 ---

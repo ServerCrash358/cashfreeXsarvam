@@ -118,6 +118,11 @@ Facts from the briefing: triggers (schedule, event, inbound webhook), steps (log
 | S12 | rate limit / 429 | backoff works | |
 | S13 | streaming STT/TTS (optional, live call) | works over the hotspot | |
 | S14 | credits used after rehearsal | within the day's allocation | |
+| S15 | Document AI **Extract** with our field schema on a printed Tamil, a printed Hindi and a handwritten English invoice | fields returned; record whether per-field confidence exists | |
+| S16 | **Parse** with `output_format="json"` | bounding boxes per block; map to fields for the audit view | |
+| S17 | page caps: a 12-page and a 25-page PDF | record the real per-job cap (10, 20 or 30) and the error returned | |
+| S18 | language detection on mixed Tamil/English invoice | detected language recorded | |
+| S19 | transliteration of 10 vendor names (if allowed) run twice | identical output both runs (else cache is mandatory) | |
 
 ---
 
