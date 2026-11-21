@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import hashlib
+import re
 from dataclasses import dataclass
 from decimal import Decimal
 from typing import Optional
@@ -16,8 +17,13 @@ class HistoryEntry:
     status: str            # paid / pending
 
 
+def item_norm(text: str) -> str:
+    """Item text compared on letters/digits only, so '5-ply' == '5 ply' whatever the intake path."""
+    return " ".join(re.findall(r"[^\W_]+", (text or "").lower()))
+
+
 def line_multiset(inv: Invoice) -> tuple:
-    return tuple(sorted((ln.item_key.strip().lower(), str(ln.qty.normalize()), str(ln.rate.normalize()))
+    return tuple(sorted((item_norm(ln.item_key), str(ln.qty.normalize()), str(ln.rate.normalize()))
                         for ln in inv.lines))
 
 

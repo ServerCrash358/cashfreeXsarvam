@@ -148,3 +148,32 @@ def test_simulated_webhook_route_sim_only_and_no_secret_needed(monkeypatch):
     assert c.post("/api/simulate/webhook", json={"transfer_id": tid}).status_code == 403
     m.engine.cfg["payout_mode"] = "sim"
     c.post("/api/reset")                                                 # leave the shared app clean
+
+
+def test_two_scans_of_one_bill_are_never_both_paid():
+    """Regression (review): two copies of B in one batch both got PAY and both went into the bundle."""
+    raw = [r for r in json.loads((ROOT / "data" / "fixtures" / "demo_batch.json").read_text(encoding="utf-8"))["invoices"]
+           if r["id"] == "B"][0]
+    from panch.reading import invoice_from_extract
+    e = Engine(live=False); e.cfg["payout_mode"] = "sim"
+    e.add_invoice(invoice_from_extract(dict(raw, id="B2")), "B_rescan.png")
+    assert e.state["B"]["decision"].outcome.value == "PAY"                  # first one in wins
+    assert e.state["B2"]["decision"].outcome.value == "BLOCK" and "DUP_EXACT" in e.state["B2"]["decision"].codes
+    _, b = e.make_plan(D("60000"))
+    ids = [i.invoice_id for i in b.items]
+    assert "B" in ids and "B2" not in ids
+
+
+def test_bundle_backstop_drops_same_fingerprint():
+    e = Engine(live=False)
+    e.state["C"]["fingerprint"] = e.state["A"]["fingerprint"]              # force a collision past the gate
+    _, b = e.make_plan(D("60000"))
+    ids = [i.invoice_id for i in b.items]
+    assert not ("A" in ids and "C" in ids)
+
+
+def test_item_text_punctuation_does_not_hide_a_duplicate():
+    """Regression (review): PR 1 reads '5 ply' where the fixture says '5-ply'; a rescan must still be DUP_EXACT."""
+    from panch.fingerprint import item_norm
+    assert item_norm("Corrugated box 5-ply") == item_norm("corrugated  box (5 ply)")
+    assert item_norm("बॉक्स 5-प्लाई") == item_norm("बॉक्स 5 प्लाई")

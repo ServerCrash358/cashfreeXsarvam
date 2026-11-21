@@ -145,11 +145,20 @@ class Engine:
                         self.evaluate(k, cascade=False)
 
     def _pending_entries(self, inv_id: str) -> list[HistoryEntry]:
-        """Other invoices in this batch already paid or in flight count as history."""
+        """Other invoices in this batch count as history: anything paid or in flight, and any UNPAID invoice
+        ingested earlier (first one in wins), so two scans of one bill can never both be PAY. Earlier invoices
+        that are themselves BLOCKed don't count (a blocked trap must not shadow the genuine bill)."""
         out = []
+        order = list(self.invoices)
+        pos = order.index(inv_id) if inv_id in order else len(order)
         for k, st in self.state.items():
-            if k != inv_id and st.get("payment") in ("paid", "in_flight"):
+            if k == inv_id:
+                continue
+            if st.get("payment") in ("paid", "in_flight"):
                 out.append(HistoryEntry(self.invoices[k], st["vendor_id"] or "", "paid" if st["payment"] == "paid" else "pending"))
+            elif (k in order and order.index(k) < pos and st.get("payment") in ("unpaid", "failed")
+                  and st["decision"].outcome != Outcome.BLOCK):
+                out.append(HistoryEntry(self.invoices[k], st["vendor_id"] or "", "pending"))
         return out
 
     def explain(self, inv_id: str, lang: str) -> list[dict]:
@@ -251,8 +260,14 @@ class Engine:
                 d.codes = [] if i.invoice_id in chosen else ["CASH_DEFERRED"]
             self.plan_result = p
             bitems = []
+            seen_fp: set = set()
             for i in p.chosen:
                 inv = self.invoices[i.invoice_id]
+                fp = self.state[i.invoice_id]["fingerprint"]
+                if fp in seen_fp:            # backstop: one economic bill never twice in a bundle
+                    self.audit.append("bundle_duplicate_dropped", {"fingerprint": fp[:16]}, entity=i.invoice_id)
+                    continue
+                seen_fp.add(fp)
                 ah = account_hash(inv.account_number, inv.ifsc)
                 bitems.append(BundleItem(i.invoice_id, f"pnb_{i.vendor_id}_{ah[:8]}", ah, i.amount))
             b = make_bundle(bitems, cash, datetime.now())
