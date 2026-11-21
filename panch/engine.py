@@ -53,7 +53,9 @@ class Engine:
         self.cfg = json.loads((ROOT / "config" / "settings.json").read_text(encoding="utf-8"))
         self.live = live
         self.audit = Audit(ROOT / "data" / "runtime" / "audit.jsonl")
-        self.verifier = VerificationClient(live=live)
+        # live only when keys exist (live=None decides from the keys). Forcing live=True without
+        # keys called Cashfree with empty credentials and left changed accounts UNVERIFIABLE.
+        self.verifier = VerificationClient(live=None if live else False)
         self.payouts = PayoutsClient()
         self.reset()
 
@@ -207,12 +209,25 @@ class Engine:
             res = self.callback_results.get(inv_id)
             if not res or not res.passed:
                 return ["call-back has not confirmed this account"]
+            inv = self.invoices[inv_id]
+            v = self.vendor(self.state[inv_id]["vendor_id"])
+            if any(a.account_number == inv.account_number and a.ifsc == inv.ifsc for a in v.accounts):
+                return []                     # already approved: never add the account twice
+            # Red line: money never moves to an account not verified as the vendor's. Once added to
+            # the master the account is KNOWN and bank verification is skipped, so require it here.
+            checks = self.state[inv_id]["decision"].checks
+            bank_ok = any(c.code == "BANK_INVALID" and c.passed for c in checks)
+            bank_name_ok = any(c.code == "NAME_MISMATCH" and c.passed
+                               and str(c.evidence.get("pair", "")).startswith("name at bank") for c in checks)
+            if not (bank_ok and bank_name_ok):
+                return ["bank verification has not confirmed this account belongs to the vendor"]
+            blocking = [c.code for c in checks if not c.passed and c.severity == "block"]
+            if blocking:
+                return [f"bill is blocked: {', '.join(blocking)}"]
             from panch.approval import hash_pin
             import hmac
             if not hmac.compare_digest(hash_pin(pin, self.cfg["pin_salt"]), self.cfg["pin_hash"]):
                 return ["wrong PIN"]
-            inv = self.invoices[inv_id]
-            v = self.vendor(self.state[inv_id]["vendor_id"])
             v.accounts.append(VendorAccount(inv.account_number, inv.ifsc, "call-back", self.today.isoformat()))
             self.audit.append("account_change_approved", {"vendor": v.id, "new_last4": inv.account_last4}, entity=inv_id)
             self.evaluate(inv_id)
