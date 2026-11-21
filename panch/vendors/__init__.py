@@ -74,6 +74,31 @@ def _name_check(label: str, a: Optional[str], b: Optional[str], cfg: dict) -> Ch
 FRAUD_BLOCK_CODES = frozenset({"FRAUD_ACCOUNT"})
 
 
+def verify_identity(inv: Invoice, client, cfg: dict, udyam: Optional[str] = None) -> list[CheckResult]:
+    """GSTIN (and Udyam if known) for a vendor we have never seen (FR5). Only ever ASKs: Cashfree's sandbox
+    knows a handful of published IDs, so 'not found' is a sandbox gap, not proof of fraud."""
+    out: list[CheckResult] = []
+    if inv.gstin and hasattr(client, "gstin"):
+        g = client.gstin(inv.gstin, inv.payee_name or inv.vendor_name_raw)
+        ev = {"gstin": inv.gstin, "valid": g.get("valid"), "legal_name": g.get("legal_name_of_business"),
+              "status": g.get("gst_in_status"), "canned": g.get("canned")}
+        if g.get("valid") is True:
+            out.append(CheckResult("VENDOR_UNVERIFIABLE", True, "info", ev, "gstin_ok"))
+            if g.get("legal_name_of_business"):
+                out.append(_name_check("invoice payee vs GST legal name", inv.payee_name or inv.vendor_name_raw,
+                                       g.get("legal_name_of_business"), cfg))
+        else:
+            out.append(CheckResult("VENDOR_UNVERIFIABLE", False, "ask", ev, "vendor_unverifiable"))
+    if udyam and hasattr(client, "udyam"):
+        u = client.udyam(udyam, f"tp_{inv.id}"[:50])
+        ev = {"udyam": udyam, "status": u.get("status"), "enterprise_type": u.get("enterprise_type"),
+              "canned": u.get("canned")}
+        ok = u.get("status") == "SUCCESS"
+        out.append(CheckResult("VENDOR_UNVERIFIABLE", ok, "info" if ok else "ask", ev,
+                               "udyam_ok" if ok else "vendor_unverifiable"))
+    return out
+
+
 def verify_vendor(inv: Invoice, vendor: Optional[Vendor], vendors: list[Vendor], client,
                   cfg: dict, callback_result: Optional[CheckResult] = None) -> tuple[str, list[CheckResult]]:
     """Returns (lane, checks). Bank verification runs for CHANGED_ACCOUNT and NEW_VENDOR."""
@@ -99,6 +124,7 @@ def verify_vendor(inv: Invoice, vendor: Optional[Vendor], vendors: list[Vendor],
     if lane == "NEW_VENDOR":
         out.append(CheckResult("NEW_VENDOR", False, "ask", {"vendor_name": inv.vendor_name_raw, "gstin": inv.gstin},
                                "new_vendor"))
+        out.extend(verify_identity(inv, client, cfg))
     else:
         known = ", ".join("xx" + a.last4 for a in vendor.accounts)
         out.append(CheckResult("ACCOUNT_CHANGED", False, "ask",

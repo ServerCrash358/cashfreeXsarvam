@@ -17,3 +17,5 @@ data/cache/
 data/probe/
 data/demo_reads/
 data/uploads/
+data/demo/_html/
+data/demo/read_log.txt
