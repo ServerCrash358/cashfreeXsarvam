@@ -17,3 +17,7 @@ data/cache/
 data/probe/
 data/demo_reads/
 data/uploads/
+
+# OCR test images and reports: regenerate with scripts/generate_ocr_samples.py
+data/ocr_samples/*.png
+data/ocr_samples/report.json

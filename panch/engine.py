@@ -159,6 +159,10 @@ class Engine:
             st = self.state[inv_id]
             if st["lane"] != "CHANGED_ACCOUNT":
                 raise ValueError("call-back is only for a changed account on a known vendor")
+            prev = self.callback_results.get(inv_id)
+            if prev is not None and prev.code == "CALLBACK_MISMATCH" and not prev.passed:
+                # a mismatch is final: calling again until the digits match would defeat the check
+                raise ValueError("vendor already gave different digits on the number on file: bill stays blocked")
             s = start_callback(self.vendor(st["vendor_id"]), self.invoices[inv_id])
             self.callbacks[s.id] = s
             self.audit.append("callback_started", {"phone_used": s.public()["phone_used"],
@@ -169,6 +173,12 @@ class Engine:
     def finish_callback(self, cb_id: str, transcript: str, audio: Optional[bytes] = None) -> CheckResult:
         with _lock:
             s = self.callbacks[cb_id]
+            if s.result is not None:
+                # one answer per call: a second submission must not overwrite a mismatch
+                raise ValueError("this call already has a result; start a new call if it was not answered")
+            prev = self.callback_results.get(s.invoice_id)
+            if prev is not None and prev.code == "CALLBACK_MISMATCH" and not prev.passed:
+                raise ValueError("vendor already gave different digits on the number on file: bill stays blocked")
             res = finish_callback(s, transcript, audio)
             s.result = {"code": res.code, "passed": res.passed, "evidence": res.evidence}
             self.callback_results[s.invoice_id] = res
