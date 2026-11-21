@@ -11,6 +11,13 @@ Make voice catch a trap (call-back on the vendor's number on file), make approva
 - `panch/approval/`: `make_bundle(items, cash_limit, now)` (canonical JSON, SHA-256, nonce, 3-digit code, 2-minute TTL) and `check_approval(bundle, transcript_or_code, now)` (yes + total + count + code; single use). Typed-code fallback.
 - `app/`: FastAPI app, routes from ARCHITECTURE section 3 that are not webhooks, server-sent events, and a simple owner UI: batch table with outcome chips and reasons in the owner's language, side-by-side crop vs value for ASK, plan + approval panel, live payout status, audit and scoreboard tabs.
 
+## v3 additions (priority: P1 call-back, P3 approval)
+- **P1** call-back (unchanged): vendor-master phone only; Bulbul asks for the last four digits; Saaras hears; code compares.
+- **P3** **voice never authorises alone**: spoken read-back and confirmation in the owner's language, then a **PIN tap** bound to the same `bundle_hash` is the authority (single use, short expiry).
+- **P3** second approver (own PIN) above an owner-set amount or when any item came through `CHANGED_ACCOUNT`.
+- Explanations are **templates only** (no Sarvam chat model; team rule). Explain from the native extraction; never round-trip translations. Account numbers as last four only.
+- Extra tests: `U-APR-10`, `U-APR-11`.
+
 ## Tests to implement
 Offline: `U-VEN-9` to `U-VEN-11`, `U-APR-1` to `U-APR-9`, `U-DEC-6` (templates exist). Integration (run once, record): `IT-SARVAM` S2, S3, S5-S12; `IT-COMM` C2-C4, C7, C9; `IT-RELAY` R6-R8 if Relay is used.
 
