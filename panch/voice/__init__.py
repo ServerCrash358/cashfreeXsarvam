@@ -16,9 +16,14 @@ LANG_CODES = {"en": "en-IN", "hi": "hi-IN", "ta": "ta-IN"}
 
 def _fmt(v) -> str:
     """Numbers above four digits with Indian commas, for correct pronunciation."""
-    from decimal import Decimal
+    from decimal import Decimal, InvalidOperation
+    if isinstance(v, bool):          # bool is an int subclass; Decimal("True") raises
+        return str(v)
     if isinstance(v, (int, Decimal)) or (isinstance(v, str) and v.replace(".", "", 1).isdigit()):
-        d = Decimal(str(v))
+        try:
+            d = Decimal(str(v))
+        except InvalidOperation:     # e.g. native-script or superscript digits: show as written
+            return str(v)
         whole = int(d)
         s = str(whole)
         if len(s) > 3:

@@ -19,3 +19,7 @@ data/demo_reads/
 data/uploads/
 data/demo/_html/
 data/demo/read_log.txt
+
+# OCR test images and reports: regenerate with scripts/generate_ocr_samples.py
+data/ocr_samples/*.png
+data/ocr_samples/report.json

@@ -39,7 +39,7 @@ input[type=text],input[type=password],input[type=number]{padding:6px 8px;border:
   <h1>TijoriPay</h1><span class="sub">pay the right bill, to the right person</span>
   <span class="sp"></span>
   <span id="mode" class="tag" style="color:#fff;border-color:#fff8"></span>
-  <label>Owner language <select id="lang"><option value="ta">தமிழ்</option><option value="hi">हिन्दी</option><option value="en">English</option></select></label>
+  <label>Owner language <select id="lang"><option value="hi" selected>हिन्दी</option><option value="ta">தமிழ்</option><option value="en">English</option></select></label>
   <button class="ghost" onclick="resetAll()">Reset demo</button>
 </header>
 <main>
@@ -108,8 +108,20 @@ function showDetail(id){
   ${i.reasons.map(r=>`<div class="reason ${r.severity}"><b>${r.code}</b><button class="ghost" style="float:right;padding:2px 8px" onclick='say(${JSON.stringify(r.text)})'>▶</button><div>${esc(r.text)}</div></div>`).join('')}
   <details><summary>Evidence (native extraction, checks)</summary><pre>${esc(JSON.stringify({raw_native:i.raw_native,reasons:i.reasons.map(r=>({code:r.code,evidence:r.evidence}))},null,2))}</pre></details>`;
 }
-async function say(text){try{const r=await fetch('/api/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,lang:lang()})});if(!r.ok)throw new Error((await r.json()).detail);new Audio(URL.createObjectURL(await r.blob())).play()}catch(e){toast('Voice unavailable: '+e.message)}}
-async function sayIn(text,l){try{const r=await fetch('/api/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,lang:l})});if(!r.ok)throw new Error((await r.json()).detail);new Audio(URL.createObjectURL(await r.blob())).play()}catch(e){toast('Voice unavailable: '+e.message)}}
+// Bulbul playback: cache each clip (replays are instant, no second TTS call) and stop the
+// previous clip so repeated clicks never play on top of each other.
+const _tts={};let _audio=null;
+async function sayIn(text,l){
+  try{
+    const k=l+'|'+text;
+    if(!_tts[k]){_tts[k]=(async()=>{const r=await fetch('/api/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,lang:l})});
+      if(!r.ok)throw new Error((await r.json()).detail);return URL.createObjectURL(await r.blob())})();
+      _tts[k].catch(()=>delete _tts[k])}
+    const url=await _tts[k];
+    if(_audio){_audio.pause();_audio.currentTime=0}
+    _audio=new Audio(url);await _audio.play()
+  }catch(e){toast('Voice unavailable: '+e.message)}}
+async function say(text){return sayIn(text,lang())}
 async function startRec(btn){try{const st=await navigator.mediaDevices.getUserMedia({audio:true});chunks=[];rec=new MediaRecorder(st);rec.ondataavailable=e=>chunks.push(e.data);rec.start();btn.textContent='■ Stop';btn.onclick=()=>stopRec(btn)}catch(e){toast('Mic unavailable: '+e.message)}}
 function stopRec(btn){return new Promise(res=>{rec.onstop=()=>{rec.stream.getTracks().forEach(t=>t.stop());btn._blob=new Blob(chunks,{type:'audio/webm'});btn.textContent='● Re-record';btn.onclick=()=>startRec(btn);toast('Recorded. Now submit.');res()};rec.stop()})}
 async function startCb(id){try{cbSession=await post(`/api/invoices/${id}/callback`);renderCb()}catch(e){toast(e.message)}}
@@ -117,12 +129,15 @@ function renderCb(res){
   const s=cbSession;
   $('cb').innerHTML=`<p>Calling <b>${esc(s.phone_used)}</b> (vendor master). <span class="mute">Number printed on the invoice (${esc(s.invoice_phone_ignored||'none')}) is ignored.</span></p>
   <div class="reason info">${esc(s.prompt)} <button class="ghost" style="padding:2px 8px" onclick='sayIn(${JSON.stringify(s.prompt)},"${s.lang}")'>▶ Bulbul</button></div>
-  <div class="row2"><button class="ghost" id="cbmic" onclick="startRec(this)">● Record vendor reply</button><input type="text" id="cbtxt" placeholder="or type what the vendor said" style="flex:1"><button onclick="finishCb()">Submit</button></div>
+  ${res?'':`<div class="row2"><button class="ghost" id="cbmic" onclick="startRec(this)">● Record vendor reply</button><input type="text" id="cbtxt" placeholder="or type what the vendor said" style="flex:1"><button id="cbsubmit" onclick="finishCb()">Submit</button></div>`}
   ${res?`<div class="reason ${res.passed?'info':res.severity}"><b>${res.code}</b> ${res.passed?'matched':'did not match'} · heard “${esc(res.evidence.transcript)}” → ${esc(res.evidence.spoken_last4||'?')} vs invoice ${esc(res.evidence.invoice_account_last4)}</div>
-   ${res.passed?`<div class="row2">Approve account change: <input type="password" id="acpin" placeholder="PIN" style="width:90px"><button onclick="approveAcct('${s.invoice_id}')">Approve change</button></div>`:''}`:''}`;
+   ${res.passed?`<div class="row2">Approve account change: <input type="password" id="acpin" placeholder="PIN" style="width:90px"><button onclick="approveAcct('${s.invoice_id}')">Approve change</button></div>`:''}
+   <div class="row2"><button class="ghost" onclick="nextCb()">Call another vendor</button></div>`:''}`;
 }
-async function finishCb(){const fd=new FormData();const b=$('cbmic')._blob;if(b)fd.append('audio',b,'reply.webm');else fd.append('transcript',$('cbtxt').value);
-  try{const r=await post(`/api/callbacks/${cbSession.id}/result`,fd,true);renderCb(r);await load();renderCb(r)}catch(e){toast(e.message)}}
+function nextCb(){cbSession=null;$('cb').innerHTML='';render()}
+async function finishCb(){const btn=$('cbsubmit');if(btn)btn.disabled=true;   // one answer per call
+  const fd=new FormData();const b=$('cbmic')._blob;if(b)fd.append('audio',b,'reply.webm');else fd.append('transcript',$('cbtxt').value);
+  try{const r=await post(`/api/callbacks/${cbSession.id}/result`,fd,true);renderCb(r);await load();renderCb(r)}catch(e){if(btn)btn.disabled=false;toast(e.message)}}
 async function approveAcct(id){const r=await post(`/api/invoices/${id}/approve-account`,{pin:$('acpin').value});toast(r.ok?'Account added to vendor master (provenance: call-back)':r.reasons.join(', '));load()}
 async function doPlan(){try{await post('/api/plan',{cash:$('cash').value,lang:lang()});await load()}catch(e){toast(e.message)}}
 function renderPlan(){const p=S.plan;if(!p){$('plan').innerHTML='';return}

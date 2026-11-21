@@ -111,6 +111,8 @@ def callback_start(inv_id: str):
 @app.post("/api/callbacks/{cb_id}/result")
 async def callback_result(cb_id: str, transcript: Optional[str] = Form(None), audio: Optional[UploadFile] = File(None)):
     data = None
+    if cb_id not in engine.callbacks:
+        raise HTTPException(404, "no such call-back")
     if audio is not None:
         data = await audio.read()
         s = engine.callbacks[cb_id]
@@ -119,7 +121,10 @@ async def callback_result(cb_id: str, transcript: Optional[str] = Form(None), au
                                                  audio.content_type or "audio/webm")
         except Exception as e:
             raise HTTPException(502, f"speech-to-text failed: {e}")
-    res = engine.finish_callback(cb_id, transcript or "", data)
+    try:
+        res = engine.finish_callback(cb_id, transcript or "", data)
+    except ValueError as e:
+        raise HTTPException(409, str(e))
     return {"code": res.code, "passed": res.passed, "severity": res.severity, "evidence": res.evidence}
 
 
