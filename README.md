@@ -14,6 +14,9 @@ Our build for the Sarvam x Cashfree Buildathon (Bengaluru, 21 Nov 2026), Problem
 | [docs/UNIT_TESTS.md](docs/UNIT_TESTS.md) | Offline unit tests and the evaluation harness |
 | [docs/INTEGRATION_TESTS.md](docs/INTEGRATION_TESTS.md) | Cashfree test env, Relay, Sarvam SDK, communication suites |
 | [docs/BUILD_PLAN.md](docs/BUILD_PLAN.md) | Full decision report and history |
+| [docs/RELAY.md](docs/RELAY.md) | Cashfree Relay adapter and canvas recipe |
+| [docs/DEMO_FLOW.md](docs/DEMO_FLOW.md) | 10-minute demo script |
+| [docs/DESIGN_NOTE.md](docs/DESIGN_NOTE.md) | Submission design note |
 | [docs/BUILD_PROMPT.md](docs/BUILD_PROMPT.md) | One-page brief to paste into a coding agent |
 
 ## Setup

@@ -23,6 +23,7 @@ from panch.reading import invoice_from_extract
 from panch.vendors import account_hash, find_vendor, frozen_by, verify_vendor
 from panch.vendors.callback import CallbackSession, finish_callback, start_callback
 from panch.voice import render
+from panch.relay import RelayClient
 
 ROOT = Path(__file__).resolve().parents[1]
 _lock = threading.RLock()
@@ -57,6 +58,8 @@ class Engine:
         # keys called Cashfree with empty credentials and left changed accounts UNVERIFIABLE.
         self.verifier = VerificationClient(live=None if live else False)
         self.payouts = PayoutsClient()
+        # Relay (Cashfree's agent canvas) only in live mode, and only if RELAY_WEBHOOK_URL is set; off in tests
+        self.relay = RelayClient() if live else RelayClient(url="")
         self.reset()
 
     # ------------------------------------------------------------------ state
@@ -90,6 +93,11 @@ class Engine:
             self.audit.append("batch_loaded", {"invoices": list(self.raw), "source": "cached Vision Extract"})
             for inv_id in self.invoices:
                 self.evaluate(inv_id)
+            counts: dict = {}
+            for st in self.state.values():
+                counts[st["decision"].outcome.value] = counts.get(st["decision"].outcome.value, 0) + 1
+            self.relay.trigger("batch_ready", bills=len(self.invoices), outcomes=counts,
+                               owner_language=self.cfg.get("owner_lang"))
 
     def add_invoice(self, inv: Invoice, filename: str) -> str:
         """A newly read invoice (live Vision upload or curveball batch) joins the batch and is decided."""
@@ -135,6 +143,10 @@ class Engine:
                 "payment": prev.get("payment", "unpaid"),
                 "deadline": msme_deadline(inv.date, v) if v else None,
             }
+            was = prev.get("decision").outcome if prev.get("decision") else None
+            if was is not None and was != Outcome.BLOCK and dec.outcome == Outcome.BLOCK:
+                self.relay.trigger("bill_blocked", invoice_id=inv_id, vendor=v.legal_name if v else inv.vendor_name_raw,
+                                   amount=str(inv.total), codes=dec.codes)
             self.audit.append("decision", {"outcome": dec.outcome.value, "codes": dec.codes, "lane": lane},
                               entity=inv_id)
             self.emit("decision", {"invoice": inv_id, "outcome": dec.outcome.value})
@@ -199,6 +211,14 @@ class Engine:
             self.audit.append("callback_started", {"phone_used": s.public()["phone_used"],
                                                    "invoice_phone_ignored": s.public()["invoice_phone_ignored"]},
                               entity=inv_id)
+            # Relay places the call: it gets the vendor-MASTER phone (it must dial it), the exact template prompt
+            # in the vendor's language, and where to post what it heard. Never the expected digits or any account.
+            r = self.relay.trigger("callback_requested", invoice_id=inv_id, callback_id=s.id, vendor=s.vendor_id,
+                                   phone=s.phone_used, language=s.lang, prompt=s.prompt,
+                                   result_path=f"/api/relay/callbacks/{s.id}/result")
+            if self.relay.enabled:
+                self.audit.append("relay_trigger", {"event": "callback_requested", "result": r.get("result")},
+                                  entity=inv_id)
             return s
 
     def finish_callback(self, cb_id: str, transcript: str, audio: Optional[bytes] = None) -> CheckResult:
@@ -402,6 +422,8 @@ class Engine:
         if att.state == "SUCCESS":
             if st["payment"] != "paid":
                 st["payment"] = "paid"
+                self.relay.trigger("payout_success", invoice_id=inv.id, vendor=v.legal_name, amount=str(att.amount),
+                                   transfer_id=att.transfer_id, simulated=att.simulated)
                 self.emit("payout", {"invoice": inv.id, "state": "SUCCESS",
                                      "text": render("payout_success", self.cfg["owner_lang"], amount=att.amount,
                                                     vendor=v.legal_name)})
@@ -412,6 +434,8 @@ class Engine:
                 d = st["decision"]
                 d.outcome = Outcome.ASK
                 d.codes = ["PAYOUT_REVERSED"]
+                self.relay.trigger("payout_reversed", invoice_id=inv.id, vendor=v.legal_name, amount=str(att.amount),
+                                   transfer_id=att.transfer_id, simulated=att.simulated)
                 self.emit("payout", {"invoice": inv.id, "state": "REVERSED",
                                      "text": render("payout_reversed", self.cfg["owner_lang"], amount=att.amount,
                                                     vendor=v.legal_name)})

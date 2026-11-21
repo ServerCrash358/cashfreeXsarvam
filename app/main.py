@@ -207,6 +207,32 @@ async def simulate_webhook(request: Request):
     return {**engine.webhook(json.dumps(payload).encode(), {}, verify=False), "simulated": True}
 
 
+@app.get("/api/relay")
+def relay_status():
+    """Whether Relay is wired, and the last events we triggered (no secrets in them)."""
+    return {"enabled": engine.relay.enabled, "events": engine.relay.sent[-20:]}
+
+
+@app.post("/api/relay/callbacks/{cb_id}/result")
+async def relay_callback_result(cb_id: str, request: Request):
+    """Relay HTTP action -> us: what the vendor said on the call Relay placed. Authenticated with
+    x-tijoripay-signature = hex HMAC-SHA256(RELAY_SHARED_SECRET, raw body). Relay only reports the
+    transcript; the comparison and the decision happen here, exactly as for a call made from the UI."""
+    raw = await request.body()
+    if not engine.relay.check_inbound(raw, request.headers.get("x-tijoripay-signature")):
+        raise HTTPException(401, "bad or missing relay signature")
+    if cb_id not in engine.callbacks:
+        raise HTTPException(404, "no such call-back")
+    body = json.loads(raw or b"{}")
+    try:
+        res = engine.finish_callback(cb_id, str(body.get("transcript", "")))
+    except ValueError as e:
+        raise HTTPException(409, str(e))
+    engine.audit.append("relay_callback_result", {"code": res.code, "passed": res.passed}, actor="relay",
+                        entity=engine.callbacks[cb_id].invoice_id)
+    return {"code": res.code, "passed": res.passed}
+
+
 @app.post("/api/tts")
 async def tts(request: Request):
     body = await request.json()
