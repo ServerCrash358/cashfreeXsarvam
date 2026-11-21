@@ -21,6 +21,6 @@
   "dup_new_period_days": 25,
   "pin_salt": "panch-demo",
   "pin_hash": "7cce6cac9d035646eb4934301706d4ac2b11caf285058fbe49f3b4cdfe9138b4",
-  "payout_mode": "live",
+  "payout_mode": "sim",
   "sweep_seconds": 60
 }

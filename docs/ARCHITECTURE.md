@@ -1,4 +1,4 @@
-# ARCHITECTURE.md: Panch technical spec (canonical)
+# ARCHITECTURE.md: TijoriPay technical spec (canonical)
 
 Where any other doc disagrees with this one, this one wins. Items marked UNVERIFIED have not been confirmed in docs or a real run.
 
@@ -102,7 +102,7 @@ stateDiagram-v2
 
 ```mermaid
 sequenceDiagram
-  participant P as Panch
+  participant P as TijoriPay
   participant VM as Vendor master
   participant B as Bulbul (TTS)
   participant V as Vendor (number on file)
@@ -127,7 +127,7 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-  participant P as Panch
+  participant P as TijoriPay
   participant B as Bulbul (TTS)
   participant O as Owner
   participant S as Saaras (STT)

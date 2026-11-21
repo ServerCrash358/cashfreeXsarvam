@@ -48,7 +48,7 @@ def test_dates():
     assert parse_date("11 नवंबर 2026") == (date(2026, 11, 11), False)
     assert parse_date("9 நவம்பர் 2026") == (date(2026, 11, 9), False)
     assert parse_date("2026-11-12") == (date(2026, 11, 12), False)
-    assert parse_date("05/11/2026") == (date(2026, 11, 5), True)       # ambiguous day/month
+    assert parse_date("05/11/2026")[0] == date(2026, 11, 5)            # PR 1: day-first India default
     assert parse_date("25/11/2026") == (date(2026, 11, 25), False)
     assert parse_date("3rd November 2026") == (date(2026, 11, 3), False)
 

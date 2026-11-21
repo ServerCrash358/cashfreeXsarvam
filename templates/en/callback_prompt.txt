@@ -1,1 +1,1 @@
-Hello {vendor}, this is Panch calling about your invoice of {amount} rupees. It asks us to pay a new bank account. Please tell us the last four digits of the account you want us to pay.
+Hello {vendor}, this is TijoriPay calling about your invoice of {amount} rupees. It asks us to pay a new bank account. Please tell us the last four digits of the account you want us to pay.

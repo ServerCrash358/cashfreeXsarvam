@@ -1,6 +1,6 @@
 # AGENTS.md: read this first
 
-This repo is the team's build for the **Sarvam x Cashfree Buildathon (Bengaluru, 21 Nov 2026)**, Problem Statement 3: *pay the right bill, to the right person*. The build is called **Panch** (working name). These docs carry the full context behind every decision, so a coding agent can build without re-deriving it.
+This repo is the team's build for the **Sarvam x Cashfree Buildathon (Bengaluru, 21 Nov 2026)**, Problem Statement 3: *pay the right bill, to the right person*. The build is called **TijoriPay**. These docs carry the full context behind every decision, so a coding agent can build without re-deriving it.
 
 ## Read in this order
 

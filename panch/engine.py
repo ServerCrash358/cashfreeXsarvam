@@ -1,4 +1,4 @@
-"""Panch engine: wires the pure modules to state, Cashfree and Sarvam. One instance per app."""
+"""TijoriPay engine: wires the pure modules to state, Cashfree and Sarvam. One instance per app."""
 from __future__ import annotations
 
 import copy
@@ -88,6 +88,20 @@ class Engine:
             self.audit.append("batch_loaded", {"invoices": list(self.raw), "source": "cached Vision Extract"})
             for inv_id in self.invoices:
                 self.evaluate(inv_id)
+
+    def add_invoice(self, inv: Invoice, filename: str) -> str:
+        """A newly read invoice (live Vision upload or curveball batch) joins the batch and is decided."""
+        with _lock:
+            if inv.id in self.invoices:
+                self.audit.append("intake_duplicate_file", {"file": filename}, entity=inv.id)
+                return inv.id                      # same file twice: one queue keyed by file hash
+            self.invoices[inv.id] = inv
+            self.raw[inv.id] = {"file": filename}
+            self.expected[inv.id] = None
+            self.audit.append("invoice_ingested", {"file": filename, "source_hash": inv.source_hash,
+                                                   "language": inv.language}, entity=inv.id)
+            self.evaluate(inv.id)
+            return inv.id
 
     def vendor(self, vid: Optional[str]) -> Optional[Vendor]:
         return next((v for v in self.vendors if v.id == vid), None)
@@ -288,7 +302,7 @@ class Engine:
                 self.audit.append("beneficiary", {"http": code, "status": body.get("beneficiary_status"),
                                                   "code": body.get("code")}, entity=inv.id)
                 apply_event(att, "SENT", source="api")
-                code, body = self.payouts.transfer(tid, it.amount, it.beneficiary_id, remarks=f"Panch inv {inv.id}")
+                code, body = self.payouts.transfer(tid, it.amount, it.beneficiary_id, remarks=f"TijoriPay inv {inv.id}")
                 self._apply_cf(att, body, "api_response", http=code)
             except TimeoutError as e:
                 apply_event(att, "UNKNOWN", source=f"api {e}")
