@@ -80,6 +80,7 @@ def test_name_score():
 def engine():
     e = Engine(live=False)
     e.cfg["payout_mode"] = "sim"
+    e.payouts.sec = "test-webhook-secret"   # an empty secret is rejected: anyone could forge that signature
     return e
 
 
