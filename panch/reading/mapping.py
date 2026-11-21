@@ -17,29 +17,55 @@ Rules (brief section 5):
 """
 from __future__ import annotations
 
+import dataclasses
 import json
 import re
 from dataclasses import dataclass, field
 from decimal import Decimal
 from typing import Any, Optional
 
+# Submodules only: panch/normalise/__init__.py and panch/reading/__init__.py
+# belong to main and PR 1 must not depend on what they export.
 from ..models import Invoice, LineItem
-from ..normalise import (
-    canon_account,
-    canon_id,
-    canon_phone,
-    has_traditional_tamil_numerals,
-    norm_invoice_number,
-    parse_amount,
-    parse_date,
-    parse_quantity,
-    vendor_key,
-    words_to_amount,
-)
-from ..normalise.numerals import nfc
+from ..normalise.amounts import parse_amount, parse_quantity
+from ..normalise.dates import parse_date
+from ..normalise.invoice_number import norm_invoice_number
+from ..normalise.names import vendor_key
+from ..normalise.numerals import canon_account, canon_id, canon_phone, has_traditional_tamil_numerals, nfc
 from ..normalise.translit import to_latin
+from ..normalise.words import words_to_amount
 from .schema import LINE_FIELDS, MONEY_FIELDS
 from .vision import JobOutput
+
+
+# --------------------------------------------------------------- models
+# panch/models.py is owned by PR 2 and may drift from ARCHITECTURE section 7,
+# so PR 1 never calls Invoice(...) / LineItem(...) directly.
+def model_fields(cls) -> dict[str, bool]:
+    """Constructor field names of a dataclass or pydantic v2 model -> is it required."""
+    if dataclasses.is_dataclass(cls):
+        return {f.name: f.default is dataclasses.MISSING and f.default_factory is dataclasses.MISSING
+                for f in dataclasses.fields(cls) if f.init}
+    pyd = getattr(cls, "model_fields", None)
+    if isinstance(pyd, dict):
+        return {name: info.is_required() for name, info in pyd.items()}
+    raise TypeError(f"{cls!r} is neither a dataclass nor a pydantic v2 model")
+
+
+def make_model(cls, **values):
+    """cls(**values) keeping only fields cls has; a required field we don't know gets None."""
+    fields = model_fields(cls)
+    kw = {k: v for k, v in values.items() if k in fields}
+    kw.update({name: None for name, required in fields.items() if required and name not in kw})
+    return cls(**kw)
+
+
+def make_invoice(**values) -> Invoice:
+    return make_model(Invoice, **values)
+
+
+def make_line_item(**values) -> LineItem:
+    return make_model(LineItem, **values)
 
 FIELD_TO_ATTR = {
     "invoice_no": "number", "invoice_date": "date", "vendor_name": "vendor_name",
@@ -233,14 +259,14 @@ def build_invoice(
                        "variants_read": [r.variant for r in reads], "fields": {}, "lines": {}, "crops": {}}
 
     if not reads:
-        inv = Invoice(
+        stable = {a: False for a in FIELD_TO_ATTR.values()}
+        stable["lines"] = False
+        inv = make_invoice(
             id=inv_id, source_hash=source_hash, vendor_name_raw="", vendor_key="", gstin=None,
             number_raw=None, number_norm=None, date=None, date_ambiguous=False, lines=[],
             subtotal=None, tax=None, total=None, words_amount=None, payee_name=None,
-            account_number=None, ifsc=None, language=language,
+            account_number=None, ifsc=None, stable=stable, language=language,
         )
-        inv.stable = {a: False for a in FIELD_TO_ATTR.values()}
-        inv.stable["lines"] = False
         artifacts["no_usable_read"] = True
         return inv, artifacts
 
@@ -300,9 +326,11 @@ def build_invoice(
             if v is not None:
                 raw_native[f"lines[{i}].{k}"] = v
         if l.complete:
-            # LineItem has no discount field (raised with PR 2); the row's
-            # discount stays in raw_native and feeds Invoice.discount below.
-            lines.append(LineItem(item_key=l.item_key, qty=l.qty, rate=l.rate, amount=l.amount))
+            # discount reaches LineItem only if the model has that field (make_model
+            # drops it otherwise); when unread, the model's own default applies.
+            # It also stays in raw_native and feeds Invoice.discount below.
+            extra = {"discount": l.discount} if l.discount is not None else {}
+            lines.append(make_line_item(item_key=l.item_key, qty=l.qty, rate=l.rate, amount=l.amount, **extra))
     if primary.lines:
         page = primary.lines[0].page if primary.lines[0].page is not None else (1 if single_page else None)
         if page is not None:
@@ -321,7 +349,7 @@ def build_invoice(
         discount = sum(line_discounts, Decimal(0))
         artifacts["discount_source"] = "sum_of_line_discounts"
 
-    inv = Invoice(
+    inv = make_invoice(
         id=inv_id,
         source_hash=source_hash,
         vendor_name_raw=f["vendor_name"].raw or "",
