@@ -36,9 +36,9 @@ Each PR's task spec is in `docs/tasks/`. Shared interfaces are in [ARCHITECTURE.
 
 ## 3. Build order and cuts
 
-**Order:** thin slice → invariants → fingerprint → bank verification and quarantine → payout state machine with UNKNOWN → vendor call-back → bundle-hash approval → planner → audit → scoreboard polish.
+**Order (ARCHITECTURE section 0):** thin slice → **P0** invariants (incl. GST split, digits vs words), economic fingerprint, three vendor lanes, twin controls with three metrics → **P1** bank verification + quarantine + old-number call-back; fuzzy duplicates ASK, invariant failures BLOCK → **P2** payout state machine with UNKNOWN, ledger, sweep, no auto-repay → **P3** cash/deadline ordering, bundle-hash approval with PIN, second approver.
 
-**Cut in this order if behind:** regret table → audit viewer polish → spoken code in approval (keep the button and the hash) → threshold sweep chart.
+**Cut in this order if behind:** hash-chain audit (keep a plain append-only log) → regret table → alias learning → anomaly signals → spoken code in approval (keep the PIN and the hash) → threshold sweep chart.
 
 **Never cut:** arithmetic and duplicate checks, bank verification with our own name match, one real sandbox payout, the idempotent state machine, the clean-control false-block number.
 
