@@ -5,33 +5,59 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>TijoriPay</title>
 <style>
-:root{--bg:#f6f5f1;--card:#fff;--ink:#1d1b16;--mute:#6b665c;--line:#e4e0d6;--pay:#1f7a4d;--ask:#b26a00;--block:#b3261e;--defer:#4a5fa8;--accent:#2b2a6e}
-*{box-sizing:border-box}body{margin:0;font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Tamil","Noto Sans Devanagari",sans-serif;background:var(--bg);color:var(--ink)}
-header{display:flex;gap:12px;align-items:center;padding:12px 20px;background:var(--accent);color:#fff;flex-wrap:wrap}
-header h1{margin:0;font-size:20px;letter-spacing:.5px}header .sub{opacity:.8;font-size:12px}
-header .sp{flex:1}select,input,button,textarea{font:inherit}
-.chip{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600;color:#fff}
-.PAY{background:var(--pay)}.ASK{background:var(--ask)}.BLOCK{background:var(--block)}.DEFER{background:var(--defer)}
-.tag{display:inline-block;padding:1px 6px;border:1px solid var(--line);border-radius:6px;font-size:11px;color:var(--mute)}
-main{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:16px;padding:16px 20px;max-width:1500px;margin:0 auto}
-@media(max-width:1000px){main{grid-template-columns:1fr}}
-.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:16px}
-.card h2{margin:0 0 10px;font-size:15px}
-table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:7px 6px;border-bottom:1px solid var(--line);vertical-align:top}
-th{font-size:12px;color:var(--mute);font-weight:600}tr.row{cursor:pointer}tr.row:hover{background:#faf8f3}tr.sel{background:#f1eefc}
-.native{font-size:12px;color:var(--mute)}.num{text-align:right;font-variant-numeric:tabular-nums}
-.reason{padding:8px 10px;border-left:3px solid var(--line);margin:6px 0;background:#fbfaf7;border-radius:4px}
-.reason.block{border-color:var(--block)}.reason.ask{border-color:var(--ask)}.reason.info{border-color:var(--pay)}
-details pre{font-size:11px;white-space:pre-wrap;word-break:break-word;background:#f7f6f2;padding:8px;border-radius:6px;max-height:240px;overflow:auto}
-button{padding:6px 12px;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:#fff;cursor:pointer}
-button.ghost{background:#fff;color:var(--accent)}button:disabled{opacity:.45;cursor:not-allowed}
-.row2{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0}
-input[type=text],input[type=password],input[type=number]{padding:6px 8px;border:1px solid var(--line);border-radius:8px;min-width:0}
-.big{font-size:22px;font-weight:700}.mute{color:var(--mute)}.ok{color:var(--pay);font-weight:600}.bad{color:var(--block);font-weight:600}
-.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.kpi{border:1px solid var(--line);border-radius:10px;padding:10px}
-.kpi .v{font-size:24px;font-weight:700}.mono{font-family:ui-monospace,Consolas,monospace;font-size:12px}
-.tabs button{background:#fff;color:var(--accent)}.tabs button.on{background:var(--accent);color:#fff}
-#toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:8px 14px;border-radius:8px;display:none;max-width:90vw}
+/* Cashfree-style violet theme */
+:root{
+  --brand:#6933d3;--brand-600:#5a28bd;--brand-50:#f3eefe;--brand-100:#e6dcfc;--navy:#1d1145;
+  --bg:#f6f4fb;--card:#fff;--ink:#1b1730;--mute:#6c6684;--line:#e7e3f1;
+  --pay:#0f8a5f;--pay-bg:#e3f6ee;--ask:#b26100;--ask-bg:#fdf1e0;--block:#c62e3b;--block-bg:#fde8ea;--defer:#4a5fc1;--defer-bg:#e8ecfb;
+  --radius:14px;--shadow:0 1px 2px rgba(29,17,69,.06),0 4px 16px rgba(29,17,69,.05)}
+*{box-sizing:border-box}
+body{margin:0;font:14px/1.5 "Inter",system-ui,-apple-system,"Segoe UI",Roboto,"Nirmala UI","Noto Sans Devanagari","Noto Sans Tamil",sans-serif;background:var(--bg);color:var(--ink)}
+header{display:flex;gap:14px;align-items:center;padding:14px 24px;background:linear-gradient(100deg,var(--navy) 0%,#3a1d8a 55%,var(--brand) 100%);color:#fff;flex-wrap:wrap;box-shadow:0 2px 12px rgba(29,17,69,.25)}
+header h1{margin:0;font-size:21px;font-weight:800;letter-spacing:.2px;display:flex;align-items:center;gap:8px}
+header h1::before{content:"";width:22px;height:22px;border-radius:7px;background:linear-gradient(135deg,#b69cff,#fff);display:inline-block}
+header .sub{opacity:.78;font-size:12.5px}header .sp{flex:1}
+header label{font-size:13px;opacity:.95}header select{margin-left:6px;padding:5px 8px;border-radius:8px;border:0;background:#ffffff1f;color:#fff}
+header select option{color:var(--ink)}
+header button.ghost{background:transparent;color:#fff;border-color:#ffffff66}header button.ghost:hover{background:#ffffff1a}
+select,input,button,textarea{font:inherit}
+.chip{display:inline-block;padding:2px 10px;border-radius:999px;font-size:11.5px;font-weight:700;letter-spacing:.3px}
+.PAY{color:var(--pay);background:var(--pay-bg)}.ASK{color:var(--ask);background:var(--ask-bg)}.BLOCK{color:var(--block);background:var(--block-bg)}.DEFER{color:var(--defer);background:var(--defer-bg)}
+.tag{display:inline-block;padding:1px 8px;border:1px solid var(--line);border-radius:999px;font-size:11px;color:var(--mute);background:#fff}
+header .tag{background:transparent}
+main{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:18px;padding:20px 24px;max-width:1500px;margin:0 auto}
+@media(max-width:1000px){main{grid-template-columns:1fr;padding:16px}header{padding:12px 16px}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;margin-bottom:18px;box-shadow:var(--shadow)}
+.card h2{margin:0 0 12px;font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px}
+.step{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--brand);color:#fff;font-size:12px;font-weight:700;flex:none}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:11.5px;color:var(--mute);font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+tr.row{cursor:pointer;transition:background .12s}tr.row:hover{background:var(--brand-50)}tr.sel{background:var(--brand-100)}
+.native{font-size:12px;color:var(--mute)}.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.reason{padding:9px 12px;border-left:3px solid var(--line);margin:8px 0;background:#faf9fd;border-radius:8px}
+.reason.block{border-color:var(--block);background:#fff7f8}.reason.ask{border-color:var(--ask);background:#fffaf2}.reason.info{border-color:var(--brand);background:var(--brand-50)}
+details summary{cursor:pointer;color:var(--brand);font-weight:600;margin-top:6px}
+details pre{font-size:11px;white-space:pre-wrap;word-break:break-word;background:#f7f5fc;padding:10px;border-radius:8px;max-height:240px;overflow:auto}
+button{padding:7px 14px;border-radius:10px;border:1px solid var(--brand);background:var(--brand);color:#fff;cursor:pointer;font-weight:600;transition:background .12s}
+button:hover{background:var(--brand-600)}button.ghost{background:#fff;color:var(--brand)}button.ghost:hover{background:var(--brand-50)}
+button.pay{background:var(--pay);border-color:var(--pay)}button.pay:hover{background:#0b7350}
+button:disabled{opacity:.4;cursor:not-allowed}
+.row2{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0}
+input[type=text],input[type=password],input[type=number]{padding:7px 10px;border:1px solid var(--line);border-radius:10px;min-width:0;background:#fff}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--brand-100);outline-offset:1px;border-color:var(--brand)}
+input[type=file]{font-size:12.5px;max-width:100%}
+.big{font-size:22px;font-weight:800}.mute{color:var(--mute)}.ok{color:var(--pay);font-weight:700}.bad{color:var(--block);font-weight:700}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.kpi{border:1px solid var(--line);border-radius:12px;padding:12px;background:linear-gradient(180deg,#fff,#faf8ff)}
+@media(max-width:560px){.kpis{grid-template-columns:1fr}}
+.kpi .v{font-size:26px;font-weight:800;color:var(--brand)}.mono{font-family:ui-monospace,Consolas,monospace;font-size:12px}
+.tabs button{background:#fff;color:var(--brand)}.tabs button.on{background:var(--brand);color:#fff}
+.saythis{margin:10px 0;padding:12px 14px;border-radius:12px;background:linear-gradient(120deg,var(--brand-50),#fff);border:1px dashed var(--brand)}
+.saythis .line{font-size:19px;font-weight:700;color:var(--navy);margin:2px 0 8px}
+.saythis .code{display:flex;gap:6px}.saythis .code span{display:inline-grid;place-items:center;width:34px;height:40px;border-radius:9px;background:var(--brand);color:#fff;font:700 20px ui-monospace,Consolas,monospace}
+.tick{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:700}.tick.y{color:var(--pay);background:var(--pay-bg)}.tick.n{color:var(--block);background:var(--block-bg)}
+.tablewrap{overflow-x:auto;margin:0 -4px}.tablewrap table{min-width:640px}#pay{overflow-x:auto}
+section{min-width:0}
+#toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 16px;border-radius:10px;display:none;max-width:90vw;box-shadow:0 6px 24px rgba(29,17,69,.3)}
 </style>
 </head>
 <body>
@@ -47,8 +73,8 @@ input[type=text],input[type=password],input[type=number]{padding:6px 8px;border:
   <div class="card">
     <h2>This week's bills <span class="mute" id="today"></span></h2>
     <div class="row2"><input type="file" id="files" multiple accept="image/*,.pdf"><button onclick="uploadFiles()">Read with Sarvam Vision</button><span id="upst" class="mute"></span></div>
-    <table><thead><tr><th>#</th><th>Vendor</th><th class="num">Amount ₹</th><th>MSME deadline</th><th>Lane</th><th>Decision</th><th>Payment</th></tr></thead>
-    <tbody id="rows"></tbody></table>
+    <div class="tablewrap"><table><thead><tr><th>#</th><th>Vendor</th><th class="num">Amount ₹</th><th>MSME deadline</th><th>Lane</th><th>Decision</th><th>Payment</th></tr></thead>
+    <tbody id="rows"></tbody></table></div>
   </div>
   <div class="card" id="detail"><h2>Select a bill</h2><p class="mute">Every decision comes with its reasons, in your language, and the evidence behind them.</p></div>
   <div class="card">
@@ -58,20 +84,20 @@ input[type=text],input[type=password],input[type=number]{padding:6px 8px;border:
 </section>
 <section>
   <div class="card" id="cbcard">
-    <h2>Vendor call-back (changed bank account)</h2>
+    <h2><span class="step">1</span>Vendor call-back (changed bank account)</h2>
     <div id="cb"><p class="mute">Pick a bill in the CHANGED_ACCOUNT lane.</p></div>
   </div>
   <div class="card">
-    <h2>Plan under cash</h2>
+    <h2><span class="step">2</span>Plan under cash</h2>
     <div class="row2">Cash available ₹ <input type="number" id="cash" value="30000" style="width:120px"><button onclick="doPlan()">Plan payments</button></div>
     <div id="plan"></div>
   </div>
   <div class="card">
-    <h2>Approve the bundle</h2>
+    <h2><span class="step">3</span>Approve the bundle</h2>
     <div id="appr"><p class="mute">Make a plan first.</p></div>
   </div>
   <div class="card">
-    <h2>Payouts (Cashfree)</h2>
+    <h2><span class="step">4</span>Payouts (Cashfree)</h2>
     <div class="row2"><button class="ghost" onclick="post('/api/sweep').then(load)">Reconcile now</button><span class="mute">Auto-sweep every 60 s. API 200 = submitted, not paid.</span></div>
     <div id="pay"></div>
   </div>
@@ -123,14 +149,15 @@ async function sayIn(text,l){
   }catch(e){toast('Voice unavailable: '+e.message)}}
 async function say(text){return sayIn(text,lang())}
 async function startRec(btn){try{const st=await navigator.mediaDevices.getUserMedia({audio:true});chunks=[];rec=new MediaRecorder(st);rec.ondataavailable=e=>chunks.push(e.data);rec.start();btn.textContent='■ Stop';btn.onclick=()=>stopRec(btn)}catch(e){toast('Mic unavailable: '+e.message)}}
-function stopRec(btn){return new Promise(res=>{rec.onstop=()=>{rec.stream.getTracks().forEach(t=>t.stop());btn._blob=new Blob(chunks,{type:'audio/webm'});btn.textContent='● Re-record';btn.onclick=()=>startRec(btn);toast('Recorded. Now submit.');res()};rec.stop()})}
+function stopRec(btn){return new Promise(res=>{if(!rec||rec.state!=='recording'){res();return}rec.onstop=()=>{rec.stream.getTracks().forEach(t=>t.stop());btn._blob=new Blob(chunks,{type:'audio/webm'});btn.textContent='● Re-record';btn.onclick=()=>startRec(btn);toast('Recorded. Now submit.');res()};rec.stop()})}
 async function startCb(id){try{cbSession=await post(`/api/invoices/${id}/callback`);renderCb()}catch(e){toast(e.message)}}
 function renderCb(res){
   const s=cbSession;
   $('cb').innerHTML=`<p>Calling <b>${esc(s.phone_used)}</b> (vendor master). <span class="mute">Number printed on the invoice (${esc(s.invoice_phone_ignored||'none')}) is ignored.</span></p>
   <div class="reason info">${esc(s.prompt)} <button class="ghost" style="padding:2px 8px" onclick='sayIn(${JSON.stringify(s.prompt)},"${s.lang}")'>▶ Bulbul</button></div>
   ${res?'':`<div class="row2"><button class="ghost" id="cbmic" onclick="startRec(this)">● Record vendor reply</button><input type="text" id="cbtxt" placeholder="or type what the vendor said" style="flex:1"><button id="cbsubmit" onclick="finishCb()">Submit</button></div>`}
-  ${res?`<div class="reason ${res.passed?'info':res.severity}"><b>${res.code}</b> ${res.passed?'matched':'did not match'} · heard “${esc(res.evidence.transcript)}” → ${esc(res.evidence.spoken_last4||'?')} vs invoice ${esc(res.evidence.invoice_account_last4)}</div>
+  ${res?`<div class="reason ${res.passed?'info':res.severity}"><b>${res.passed?'CALLBACK_CONFIRMED':res.code}</b> ${res.passed?'· vendor confirmed the new account':(res.code==='CALLBACK_NO_ANSWER'?'· not confirmed, call again':'· digits do not match, bill blocked')}
+   <div class="mute">vendor said <b>${esc(res.evidence.spoken_last4||'—')}</b> · invoice account ends <b>${esc(res.evidence.invoice_account_last4)}</b> · transcript “${esc((res.evidence.transcript||'').trim())}”</div></div>
    ${res.passed?`<div class="row2">Approve account change: <input type="password" id="acpin" placeholder="PIN" style="width:90px"><button onclick="approveAcct('${s.invoice_id}')">Approve change</button></div>`:''}
    <div class="row2"><button class="ghost" onclick="nextCb()">Call another vendor</button></div>`:''}`;
 }
@@ -145,14 +172,26 @@ function renderPlan(){const p=S.plan;if(!p){$('plan').innerHTML='';return}
   <div class="mute">Deferred: ${p.deferred.join(', ')||'none'} · MSME 43B(h): micro/small paid within 15 days (or agreed ≤45)</div>`;
   const b=p.bundle;
   const key=b.id+b.status+lang();if(window._apKey===key)return;window._apKey=key;
+  const say_line=sayThis(b);
   $('appr').innerHTML=`<div class="reason info">${esc(b.prompt)} <button class="ghost" style="padding:2px 8px" onclick='say(${JSON.stringify(b.prompt)})'>▶ Bulbul</button></div>
-  <div class="mono mute">bundle ${b.id} · hash ${b.hash.slice(0,16)}… · ${b.count} bills ₹${inr(b.total)} · code <b>${b.code}</b> · expires ${b.expires_at.slice(11)} · <b>${b.status}</b></div>
-  <div class="row2"><button class="ghost" id="apmic" onclick="startRec(this)">● Speak approval</button><input type="text" id="aptxt" placeholder="or type: haan, 2 bills, 22000, code ${b.code}" style="flex:1"><button onclick="voiceOk('${b.id}','voice')">Check</button><button class="ghost" onclick="voiceOk('${b.id}','typed')">Typed code only</button></div>
+  <div class="saythis"><div class="mute">Step 1 · Say this (yes, bill count, total, code)</div><div class="line">${esc(say_line)}</div>
+   <div class="code">${b.code.split('').map(d=>`<span>${d}</span>`).join('')}</div></div>
+  <div class="mono mute">bundle ${b.id} · hash ${b.hash.slice(0,16)}… · ${b.count} bills ₹${inr(b.total)} · expires ${b.expires_at.slice(11)} · <b>${b.status}</b></div>
+  <div class="row2"><button class="ghost" id="apmic" onclick="startRec(this)">● Speak approval</button><input type="text" id="aptxt" placeholder="or type: ${esc(say_line)}" style="flex:1"><button onclick="voiceOk('${b.id}','voice')">Check</button><button class="ghost" onclick="voiceOk('${b.id}','typed')">Typed code only</button></div>
   <div id="apres"></div>
-  <div class="row2">PIN tap (the authority): <input type="password" id="pin" style="width:90px" placeholder="PIN"><button onclick="pinOk('${b.id}')" ${b.status==='voice_ok'?'':'disabled'}>Confirm PIN</button><button onclick="execute('${b.id}')" ${b.status==='approved'?'':'disabled'}>Pay via Cashfree</button></div>`;
+  <div class="row2"><span class="mute">Step 2 · PIN tap (the authority)</span> <input type="password" id="pin" style="width:90px" placeholder="PIN"><button onclick="pinOk('${b.id}')" ${b.status==='voice_ok'?'':'disabled'}>Confirm PIN</button><button class="pay" onclick="execute('${b.id}')" ${b.status==='approved'?'':'disabled'}>Pay via Cashfree</button></div>`;
 }
-async function voiceOk(id,ch){const fd=new FormData();const b=$('apmic')._blob;if(b&&ch==='voice')fd.append('audio',b,'approve.webm');else fd.append('transcript',$('aptxt').value);fd.append('channel',ch);fd.append('lang',lang());
-  try{const r=await post(`/api/bundles/${id}/approve`,fd,true);await load();$('apres').innerHTML=`<div class="reason ${r.ok?'info':'block'}">${r.ok?'Voice/typed check passed. Now tap PIN.':'Rejected: '+esc(r.reasons.join('; '))}<div class="mute">heard: “${esc(r.transcript)}” · yes ${r.yes_ok} · total ${r.total_ok} · count ${r.count_ok} · code ${r.code_ok}</div></div>`}catch(e){toast(e.message)}}
+// The exact sentence the owner says: count before total (Saaras merges "22,000, do bill" into "22002").
+function sayThis(b){const c=b.code.split('').join('-'),n=b.count,t=inr(b.total);
+  return {hi:`हाँ, ${n} बिल, ${t}, कोड ${c}`,ta:`ஆமாம், ${n} பில், ${t}, கோட் ${c}`,en:`Yes, ${n} bills, ${t}, code ${c}`}[lang()]||`Yes, ${n} bills, ${t}, code ${c}`}
+async function voiceOk(id,ch){
+  const mic=$('apmic');if(rec&&rec.state==='recording'&&mic)await stopRec(mic);   // Check while recording: use the recording
+  const fd=new FormData();const b=mic&&mic._blob;if(b&&ch==='voice')fd.append('audio',b,'approve.webm');else fd.append('transcript',$('aptxt').value);fd.append('channel',ch);fd.append('lang',lang());
+  try{const r=await post(`/api/bundles/${id}/approve`,fd,true);await load();
+    const part=(ok,name)=>`<span class="tick ${ok?'y':'n'}">${ok?'✓':'✗'} ${name}</span>`;
+    $('apres').innerHTML=`<div class="reason ${r.ok?'info':'block'}">${r.ok?'Confirmed. Now tap your PIN.':'Not confirmed. Say the full line above.'}
+     <div class="row2">${part(r.yes_ok,'yes')}${part(r.count_ok,'bill count')}${part(r.total_ok,'total')}${part(r.code_ok,'code')}</div>
+     <div class="mute">heard: “${esc(r.transcript)}”</div></div>`}catch(e){toast(e.message)}}
 async function pinOk(id){const r=await post(`/api/bundles/${id}/pin`,{pin:$('pin').value});toast(r.ok?'Approved: bound to bundle hash, single use':'Refused: '+r.reasons.join(', '));load()}
 async function execute(id){try{await post(`/api/bundles/${id}/execute`);toast('Submitted to Cashfree');load()}catch(e){toast(e.message)}}
 function renderPay(){const ps=S.invoices.flatMap(i=>i.payouts.map(p=>({...p,vendor:i.vendor})));
