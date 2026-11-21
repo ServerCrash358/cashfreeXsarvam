@@ -18,6 +18,14 @@ Run `IT-CF-PAYOUT` P1-P3 and `IT-CF-WH` W1-W2 from [docs/INTEGRATION_TESTS.md](.
 - `panch/payouts/client.py`: beneficiary, transfer, status; INTENT recorded before the POST; UNKNOWN on timeout/5XX; polling with backoff; retry only after confirmed terminal failure; `DUPLICATE_TRANSFER` means fetch the original.
 - `app/routes/webhooks.py`: `POST /webhooks/cashfree/payouts` (raw body, signature, dedupe, apply by rank).
 
+## v3 additions (priority: P0 lanes, P1 verification, P2 payouts)
+- **P0** three vendor lanes: `KNOWN`, `CHANGED_ACCOUNT` (freeze all payments to the vendor until resolved), `NEW_VENDOR` (GSTIN + Udyam + bank verification, owner onboards).
+- **P1** bank verification gate: our own name match against `name_at_bank`; cache results by account hash (don't re-run checks needlessly); use only documented status codes.
+- **P2** ledger invariant: one active transfer per invoice; confirmed + in-flight ≤ invoice amount.
+- **P2** reconciliation sweep every 60 s for SENT / UNKNOWN / PENDING; an API 200 means *submitted*, never *paid*.
+- **P2** reversal (minimal): reopen the bill, re-verify, fresh approval; never auto-repay.
+- Extra tests: `U-VEN-12`, `U-VEN-13`, `U-PAY-14` to `U-PAY-17`.
+
 ## Tests to implement
 Offline: `U-VEN-1` to `U-VEN-8`, `U-PAY-1` to `U-PAY-13`, `U-SIG-1` to `U-SIG-3`. Integration (run once, record): `IT-CF-VRS` V1-V10, `IT-CF-GST` G1-G4, `IT-CF-UDYAM` U1-U3, `IT-CF-PAYOUT` P1-P14, `IT-CF-WH` W1-W7.
 
