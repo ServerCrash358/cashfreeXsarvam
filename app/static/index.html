@@ -46,6 +46,7 @@ input[type=text],input[type=password],input[type=number]{padding:6px 8px;border:
 <section>
   <div class="card">
     <h2>This week's bills <span class="mute" id="today"></span></h2>
+    <div class="row2"><input type="file" id="files" multiple accept="image/*,.pdf"><button onclick="uploadFiles()">Read with Sarvam Vision</button><span id="upst" class="mute"></span></div>
     <table><thead><tr><th>#</th><th>Vendor</th><th class="num">Amount ₹</th><th>MSME deadline</th><th>Lane</th><th>Decision</th><th>Payment</th></tr></thead>
     <tbody id="rows"></tbody></table>
   </div>
@@ -150,6 +151,9 @@ function renderScore(){const s=S.scoreboard;
   <div class="kpi"><div class="mute">Clean falsely held</div><div class="v">${s.clean_falsely_held.length}</div><div class="native">false blocks: ${s.clean_false_blocks.length}</div></div></div><p class="mute">${esc(s.claim)}</p>`}
 async function tab(b){document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b));$('score').style.display=b.dataset.t==='score'?'':'none';$('audit').style.display=b.dataset.t==='audit'?'':'none';
   if(b.dataset.t==='audit'){const a=await (await fetch('/api/audit')).json();$('audit').innerHTML=`<p>Hash chain: <b class="${a.chain_ok?'ok':'bad'}">${a.chain_ok?'intact':'BROKEN'}</b> · ${a.entries.length} entries</p><pre class="mono" style="max-height:320px;overflow:auto;white-space:pre-wrap">${esc(a.entries.slice().reverse().map(e=>`#${e.id} ${e.at} ${e.actor} ${e.action} ${e.entity||''} ${JSON.stringify(e.payload)}  ${e.hash.slice(0,10)}`).join('\n'))}</pre>`}}
+async function uploadFiles(){const fs=$('files').files;if(!fs.length){toast('Pick invoice images or PDFs');return}
+  const fd=new FormData();for(const f of fs)fd.append('files',f,f.name);$('upst').textContent='Reading '+fs.length+' file(s)… (20-90 s per job)';
+  try{const r=await post('/api/upload',fd,true);$('upst').textContent=r.results.map(x=>x.error?`${x.file}: ${x.error}`:`${x.file} → ${x.outcome} ${x.codes.join(',')}`).join(' · ');load()}catch(e){$('upst').textContent='Upload failed: '+e.message}}
 async function resetAll(){await post('/api/reset');cbSession=null;sel=null;window._apKey=null;window._dKey=null;$('appr').innerHTML='<p class="mute">Make a plan first.</p>';load()}
 $('lang').onchange=load;load();setInterval(load,2000);
 </script>
