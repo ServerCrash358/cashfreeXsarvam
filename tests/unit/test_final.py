@@ -177,3 +177,16 @@ def test_item_text_punctuation_does_not_hide_a_duplicate():
     from panch.fingerprint import item_norm
     assert item_norm("Corrugated box 5-ply") == item_norm("corrugated  box (5 ply)")
     assert item_norm("बॉक्स 5-प्लाई") == item_norm("बॉक्स 5 प्लाई")
+
+
+def test_reversed_bill_explains_the_reversal_not_ready_to_pay():
+    e = Engine(live=False); e.cfg["payout_mode"] = "sim"
+    _, b = e.make_plan(D("4000"))
+    e.approve_voice(b.id, b.code, channel="typed"); e.approve_pin(b.id, "2468"); e.execute(b.id)
+    for _ in range(3):
+        e.sweep()
+    tid = e.ledger.for_invoice("H")[0].transfer_id
+    e.webhook(json.dumps({"event_time": "r", "data": {"transfer_id": tid, "status": "REVERSED"}}).encode(), {}, verify=False)
+    reasons = e.explain("H", "en")
+    assert reasons[0]["code"] == "PAYOUT_REVERSED" and "reversed" in reasons[0]["text"].lower()
+    assert all(r["code"] != "OK" for r in reasons)

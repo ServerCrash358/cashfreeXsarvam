@@ -172,6 +172,11 @@ class Engine:
             out.append({"code": c.code, "severity": c.severity,
                         "text": render(c.message_key, lang, **{k: v2 for k, v2 in c.evidence.items() if v2 is not None}),
                         "evidence": c.evidence})
+        if st.get("payment") == "reversed":       # reopened after a reversal: say so, never "ready to pay"
+            out.insert(0, {"code": "PAYOUT_REVERSED", "severity": "ask",
+                           "text": render("payout_reversed", lang, amount=inv.total,
+                                          vendor=v.legal_name if v else inv.vendor_name_raw),
+                           "evidence": {"transfers": [a.transfer_id for a in self.ledger.for_invoice(inv_id)]}})
         if not out:
             key = "outcome_defer" if st.get("deferred") else "outcome_pay"
             out.append({"code": "CASH_DEFERRED" if st.get("deferred") else "OK", "severity": "info",

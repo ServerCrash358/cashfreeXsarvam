@@ -299,8 +299,11 @@ function render(){
   if(sel)showDetail(sel);
   renderScore();renderPlan();renderPay();renderSteps();
   const f=S.invoices.find(i=>i.lane==='CHANGED_ACCOUNT'&&i.outcome!=='BLOCK');
-  if(!cbSession)$('cb').innerHTML=f?`<div class="reason ask" style="margin-top:12px"><div class="ic">${IC.ask}</div><div class="body">Bill <b>${f.id}</b> · ${esc(f.vendor)} asks us to pay a <b>new account xx${f.account_last4}</b>. Payments to this vendor are frozen.</div></div>
-    <button class="btn" onclick="startCb('${f.id}')">${IC.phone}Call vendor on the number on file</button>`:`<p class="mute">No changed accounts waiting.</p>`;
+  // only rebuild the call-back panel when its content changes, so the button isn't swapped out under a click
+  const cbKey=cbSession?null:(f?f.id+f.account_last4+lang():'none');
+  if(!cbSession&&window._cbKey!==cbKey){window._cbKey=cbKey;$('cb').innerHTML=f?`<div class="reason ask" style="margin-top:12px"><div class="ic">${IC.ask}</div><div class="body">Bill <b>${f.id}</b> · ${esc(f.vendor)} asks us to pay a <b>new account xx${f.account_last4}</b>. Payments to this vendor are frozen.</div></div>
+    <button class="btn" onclick="startCb('${f.id}')">${IC.phone}Call vendor on the number on file</button>`:`<p class="mute">No changed accounts waiting.</p>`}
+  if(cbSession)window._cbKey=null;
 }
 function renderStats(){
   const by=o=>S.invoices.filter(i=>i.outcome===o), sum=a=>a.reduce((s,i)=>s+Number(i.total),0);
@@ -469,6 +472,8 @@ async function voiceOk(id,ch){
 async function pinOk(id){const r=await post(`/api/bundles/${id}/pin`,{pin:$('pin').value});toast(r.ok?'Approved: bound to bundle hash, single use':'Refused: '+r.reasons.join(', '));load()}
 async function execute(id){try{await post(`/api/bundles/${id}/execute`);toast('Submitted to Cashfree');load()}catch(e){toast(e.message)}}
 function renderPay(){const ps=S.invoices.flatMap(i=>i.payouts.map(p=>({...p,vendor:i.vendor})));
+  const pk=JSON.stringify(ps.map(p=>[p.transfer_id,p.state,p.status_code]))+lang();   // rebuild only on change
+  if(window._payKey===pk)return; window._payKey=pk;
   const cls=s=>s==='SUCCESS'?'PAY':['REVERSED','FAILED','REJECTED'].includes(s)?'BLOCK':'ASK';
   $('pay').innerHTML=ps.length?`<div class="tl">${ps.map(p=>`<div class="p"><div class="av ${cls(p.state)}">${p.invoice_id}</div>
     <div style="min-width:0"><b>${esc(p.vendor)}</b> · ₹${inr(p.amount)} ${p.simulated?'<span class="tag">simulated</span>':''}<div class="tid">${p.transfer_id} · cf ${esc(p.cf_transfer_id||'—')} ${esc(p.status_code||'')}</div></div>
