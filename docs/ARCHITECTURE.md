@@ -9,7 +9,7 @@ Where any other doc disagrees with this one, this one wins. Items marked UNVERIF
 | **P0** | True-by-construction invariants (arithmetic incl. GST split, digits vs words); economic fingerprint; **three vendor lanes** (KNOWN, CHANGED_ACCOUNT, NEW_VENDOR); legitimate-twin clean controls with three metrics (traps blocked, clean auto-paid rate, clean falsely held) | C, D, E, K |
 | **P1** | Bank verification with our own name match; changed-account quarantine with **old-number vendor call-back**; heuristic duplicates → ASK; hard invariant failures → BLOCK | E, E2, F |
 | **P2** | Payout state machine with **UNKNOWN**; deterministic `transfer_id`; status check before any retry; ledger (one active transfer per invoice, cumulative paid ≤ invoice amount); reconciliation sweep; reversal never auto-repays | I, I2 |
-| **P3** | Cash/deadline ordering; bundle-hash approval (spoken total + bill count, **PIN tap authorises**, invalidates on any change); second approver above a threshold | G, H |
+| **P3** | Cash/deadline ordering; bundle-hash approval (spoken total + bill count, **PIN tap authorises**, invalidates on any change); second approver above a threshold is **stretch** (cut before anything else in P3) | G, H |
 | **Cut first** | Hash-chain audit (keep a plain append-only log), regret table, alias learning, anomaly signals | J, G, M |
 
 **Sarvam boundary (from Sarvam's own guidance plus the team rule):** extract structured fields, never translate before matching; canonicalise in code; transliterate vendor names only (never translate them); keep the native-script reading as the evidence of record; explanations come from templates (we do **not** use a Sarvam chat model to write them, even though Sarvam suggests it, because of the team rule).
@@ -271,7 +271,7 @@ Every decision stores: outcome, reason codes, evidence (values compared, crops),
 - Changed-account items need their own approval of the account change (E2) before they can enter a bundle.
 - Typed fallback: the same code typed into the UI. Honest limit: no speaker verification; a voice clone remains a risk.
 - **Voice never authorises alone.** Voice carries the conversation in the owner's language; the authority is a **PIN tap on screen** bound to the same `bundle_hash` (single use, short expiry). This answers "approval cannot be spoofed" without relying on voice.
-- **Second approver** above an owner-set amount, or when any item came through the `CHANGED_ACCOUNT` lane: a second person approves the same `bundle_hash` with their own PIN.
+- **Second approver** (stretch; cut first) above an owner-set amount, or when any item came through the `CHANGED_ACCOUNT` lane: a second person approves the same `bundle_hash` with their own PIN.
 
 ### I. Payout execution and state machine
 - Calls (REST via httpx; the `cashfree_pg` SDK covers PG only, not Payouts or Verification): `POST /payout/beneficiary` (only `VERIFIED` beneficiaries can be paid), `POST /payout/transfers`, `GET /payout/transfers?transfer_id=`. Headers `x-client-id`, `x-client-secret`, `x-api-version: 2024-01-01`. Sandbox host conflict: `sandbox.cashfree.com/payout` (most v2 pages) vs `payout-gamma.cashfree.com` (v1 and some v2 pages); use whichever our credentials work against.
