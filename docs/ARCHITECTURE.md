@@ -291,8 +291,8 @@ SUCCESS ──TRANSFER_REVERSED──> REVERSED ──> bill reopened (re-verify
 | UNKNOWN is not FAILED | on timeout/5XX, mark `UNKNOWN`; poll `GET /payout/transfers` with backoff; never resend while UNKNOWN |
 | Retry only from terminal failure | a new attempt (attempt + 1, new `transfer_id`) only after the status API confirms FAILED/REJECTED and not `DUPLICATE_TRANSFER`; within the same approved bundle |
 | Success is final only when | status SUCCESS and `status_code` COMPLETED (`SENT_TO_BENEFICIARY` is not final) |
-| Reversal | `REVERSED` reopens the bill as unpaid; it goes back through E (re-verify) and needs a fresh bundle approval; never auto-repay |
-| Duplicate response | `REJECTED` + `DUPLICATE_TRANSFER` means "already sent"; fetch status of the original, do not create a new attempt |
+| Reversal | `REVERSED` reopens the bill as unpaid; it goes back through E (re-verify) and needs a fresh bundle approval; never auto-repay. A `REVERSED` seen **before** our SUCCESS is accepted and final (Cashfree only reverses a completed transfer, so we missed the SUCCESS event; ignoring it would strand the bill in flight). Decided 21 Nov with PR 3 |
+| Duplicate response | `REJECTED` + `DUPLICATE_TRANSFER` (or `transfer_id_already_exists`) means "already sent": take the original's status; if the status call fails, hold at UNKNOWN and poll. **Never FAILED**, never a new attempt |
 | Ledger invariant | at most **one active transfer per invoice**; confirmed + in-flight amounts never exceed the invoice amount; Cashfree's duplicate rejection is the backstop, not the control |
 | Reconciliation sweep | every 60 s, poll status for transfers in SENT, UNKNOWN or PENDING, so a lost webhook never leaves an invoice in limbo (push and pull, two paths to the truth) |
 | API 200 | means *submitted*, never *paid*; an invoice is paid only at SUCCESS + COMPLETED |
@@ -300,7 +300,8 @@ SUCCESS ──TRANSFER_REVERSED──> REVERSED ──> bill reopened (re-verify
 ### I2. Webhook receiver
 - `POST /webhooks/cashfree/payouts`. Verify `x-webhook-signature` = base64(HMAC-SHA256(client_secret, `x-webhook-timestamp` + raw body)) on the **raw** body. This matches `Cashfree.PGVerifyWebhookSignature` in the installed `cashfree_pg` SDK (no separator). Docs conflict for some products, so test against a real delivery.
 - Events: `TRANSFER_ACKNOWLEDGED`, `TRANSFER_SUCCESS`, `TRANSFER_FAILED`, `TRANSFER_REVERSED`, `TRANSFER_REJECTED`, plus `LOW_BALANCE_ALERT`, `BENEFICIARY_INCIDENT`.
-- Deduplicate by (`cf_transfer_id`, `status`, `event_time`). Apply by state rank (INTENT 0 < SENT/UNKNOWN 1 < PENDING 2 < SUCCESS/FAILED/REJECTED 3 < REVERSED 4); a lower-rank event after a higher one is logged and ignored. If unsure, poll status.
+- Deduplicate by (`cf_transfer_id`, `status`, `event_time`). Apply by state rank (INTENT 0 < SENT/UNKNOWN 1 < PENDING 2 < SUCCESS/FAILED/REJECTED 3 < REVERSED 4); a lower-rank event after a higher one is logged and ignored (exception: `REVERSED` is accepted even before SUCCESS, see section I). If unsure, poll status.
+- Simulated webhooks (`/api/simulate/webhook`) exist only in sim payout mode, only for simulated transfers, and are never signed; real webhooks always need a valid signature, and an empty secret verifies nothing.
 - Delivery stops after more than five failures (docs), so always reconcile by polling too.
 
 ### J. Audit ledger (thin)

@@ -87,3 +87,64 @@ def test_recorded_vision_contract_masks_account_and_keeps_fields():
     blob = json.dumps(rec, ensure_ascii=False)
     assert "000100289877623" not in blob                                    # exported reads are masked
     assert "18000" in blob.replace(",", "")
+
+
+# ---------------------------------------------------- review fixes (second Claude review)
+class _DupClient:
+    secret = "s"
+
+    def __init__(self, status_body=None):
+        self.status_body = status_body
+
+    def get_status(self, tid):
+        if self.status_body is None:
+            raise TimeoutError("status endpoint down")
+        return 200, self.status_body
+
+
+def _attempt(e):
+    from panch.payouts import Attempt, apply_event
+    a = e.ledger.add(Attempt("pn_dup", "B", "b", "x", D("18000")))
+    apply_event(a, "SENT")
+    return a
+
+
+def test_duplicate_response_with_status_down_is_unknown_never_failed():
+    """Regression: a 409 duplicate + failed status call used to mark FAILED, which allowed a second payment."""
+    e = Engine(live=False); e.payouts = _DupClient(None)
+    a = _attempt(e)
+    e._apply_cf(a, {"code": "transfer_id_already_exists", "message": "dup"}, "api_response", http=409)
+    assert a.state == "UNKNOWN"
+    assert e.ledger.can_start("B", D("18000"), D("18000"))                 # no second attempt allowed
+
+
+def test_duplicate_response_takes_original_status():
+    e = Engine(live=False); e.payouts = _DupClient({"status": "SUCCESS", "status_code": "COMPLETED", "cf_transfer_id": "9"})
+    a = _attempt(e)
+    e._apply_cf(a, {"status": "REJECTED", "status_code": "DUPLICATE_TRANSFER"}, "api_response", http=200)
+    assert a.state == "SUCCESS" and a.cf_transfer_id == "9"
+
+
+def test_simulated_webhook_route_sim_only_and_no_secret_needed(monkeypatch):
+    os = __import__("os"); os.environ["TIJORIPAY_OFFLINE"] = "1"
+    from fastapi.testclient import TestClient
+    import app.main as m
+    c = TestClient(m.app)
+    c.post("/api/reset"); m.engine.cfg["payout_mode"] = "sim"
+    monkeypatch.setattr(m.engine.payouts, "sec", "")                       # empty secret, as on a teammate's .env
+    p = c.post("/api/plan", json={"cash": "4000"}).json()
+    c.post(f"/api/bundles/{p['bundle']['id']}/approve", data={"transcript": p["bundle"]["code"], "channel": "typed"})
+    c.post(f"/api/bundles/{p['bundle']['id']}/pin", json={"pin": "2468"})
+    c.post(f"/api/bundles/{p['bundle']['id']}/execute")
+    for _ in range(3):
+        c.post("/api/sweep")
+    tid = m.engine.ledger.for_invoice("H")[0].transfer_id
+    r = c.post("/api/simulate/webhook", json={"transfer_id": tid, "status": "REVERSED"}).json()
+    assert r["state"] == "REVERSED" and r["simulated"] is True
+    # an empty secret must never let a real webhook through
+    assert c.post("/webhooks/cashfree/payouts", content=b"{}", headers={"x-webhook-signature": "x",
+                                                                        "x-webhook-timestamp": "1"}).status_code == 401
+    m.engine.cfg["payout_mode"] = "live"
+    assert c.post("/api/simulate/webhook", json={"transfer_id": tid}).status_code == 403
+    m.engine.cfg["payout_mode"] = "sim"
+    c.post("/api/reset")                                                 # leave the shared app clean

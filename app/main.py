@@ -189,20 +189,22 @@ async def cf_webhook(request: Request):
 
 @app.post("/api/simulate/webhook")
 async def simulate_webhook(request: Request):
-    """Demo aid: builds a payout webhook signed with our secret and sends it through the real verifier.
-    Labelled SIMULATED in the UI; a real Cashfree delivery uses the same path."""
+    """Demo aid, SIM MODE ONLY: injects a payout event for a simulated transfer, labelled simulated.
+    It never signs anything (an empty or shared secret would make forged webhooks pass), and it is
+    refused in live mode, where only a real, signature-verified Cashfree delivery can move money state."""
+    if engine.cfg.get("payout_mode") != "sim":
+        raise HTTPException(403, "simulated webhooks are only available in sim payout mode")
     body = await request.json()
     att = engine.ledger.attempts.get(body["transfer_id"])
     if not att:
         raise HTTPException(404, "unknown transfer")
+    if not att.simulated:
+        raise HTTPException(403, "only simulated transfers can receive simulated events")
     status = body.get("status", "REVERSED")
-    payload = {"type": f"TRANSFER_{status}", "event_time": time.strftime("%Y-%m-%dT%H:%M:%S"),
+    payload = {"type": f"TRANSFER_{status}", "event_time": time.strftime("%Y-%m-%dT%H:%M:%S"), "simulated": True,
                "data": {"transfer_id": att.transfer_id, "cf_transfer_id": att.cf_transfer_id, "status": status,
                         "status_code": body.get("status_code"), "transfer_amount": float(att.amount)}}
-    raw = json.dumps(payload).encode()
-    ts = str(int(time.time()))
-    sig = base64.b64encode(hmac.new(engine.payouts.secret.encode(), ts.encode() + raw, hashlib.sha256).digest()).decode()
-    return engine.webhook(raw, {"x-webhook-timestamp": ts, "x-webhook-signature": sig})
+    return {**engine.webhook(json.dumps(payload).encode(), {}, verify=False), "simulated": True}
 
 
 @app.post("/api/tts")

@@ -330,12 +330,22 @@ class Engine:
     def _apply_cf(self, att: Attempt, body: dict, source: str, http: Optional[int] = None):
         status = (body or {}).get("status") or (body or {}).get("transfer_status")
         if body.get("code") == "transfer_id_already_exists" or body.get("status_code") == "DUPLICATE_TRANSFER":
+            # "Already sent": the ORIGINAL transfer exists. Never mark this attempt FAILED (that would let a
+            # retry create a second payment): take the original's status, or hold at UNKNOWN and poll.
             att.history.append({"note": "duplicate transfer: fetching original status", "source": source})
             try:
                 _, body = self.payouts.get_status(att.transfer_id)
                 status = body.get("status")
             except Exception:
-                status = None
+                body, status = {}, None
+            state = CF_TO_STATE.get(status or "", None)
+            if state:
+                att.cf_transfer_id = body.get("cf_transfer_id") or att.cf_transfer_id
+                att.utr = body.get("transfer_utr") or att.utr
+                apply_event(att, state, body.get("status_code"), source=f"{source} (duplicate)")
+            else:
+                apply_event(att, "UNKNOWN", source=f"{source} (duplicate; status unavailable, will poll)")
+            return
         att.cf_transfer_id = body.get("cf_transfer_id") or att.cf_transfer_id
         att.utr = body.get("transfer_utr") or att.utr
         state = CF_TO_STATE.get(status or "", None)
