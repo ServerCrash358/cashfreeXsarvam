@@ -116,6 +116,8 @@ Our answers are in [ARCHITECTURE.md](ARCHITECTURE.md) (sections F, E, G and I re
 | 5 | Do reversal test accounts deliver `TRANSFER_REVERSED` webhooks, and when? | |
 | 6 | Is bank-verification name match enabled on our test account? | |
 | 7 | How is the curveball batch delivered (images, PDFs), and do we run it live? | |
+| 8 | Does Sarvam transliteration (vendor names only) fit the team rule, or do we use a local library? | |
+| 9 | Does Document AI Extract return per-field confidence, and what are the real page caps per job? | |
 
 ## 8. Glossary
 
