@@ -53,7 +53,9 @@ class Engine:
         self.cfg = json.loads((ROOT / "config" / "settings.json").read_text(encoding="utf-8"))
         self.live = live
         self.audit = Audit(ROOT / "data" / "runtime" / "audit.jsonl")
-        self.verifier = VerificationClient(live=live)
+        # live only when keys exist (live=None decides from the keys). Forcing live=True without
+        # keys called Cashfree with empty credentials and left changed accounts UNVERIFIABLE.
+        self.verifier = VerificationClient(live=None if live else False)
         self.payouts = PayoutsClient()
         self.reset()
 

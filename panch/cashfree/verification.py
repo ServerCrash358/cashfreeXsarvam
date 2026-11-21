@@ -68,6 +68,9 @@ class VerificationClient:
             data = r.json()
         except ValueError:
             raise CashfreeUnavailable(f"HTTP {r.status_code}: non-JSON body")
+        if r.status_code >= 400 and "account_status" not in data and "valid" not in data and "status" not in data:
+            # an error body is not a verification result: fall back instead of reading it as one
+            raise CashfreeUnavailable(f"HTTP {r.status_code}: {str(data.get('message', ''))[:120]}")
         data["_http"] = r.status_code
         return data
 
