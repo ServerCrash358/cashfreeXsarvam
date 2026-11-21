@@ -197,3 +197,10 @@ def test_identifiers_are_not_comma_formatted_in_messages():
     t = render("account_changed", "en", invoice_account_last4="3142", known_accounts="xx8901")
     assert "xx3142" in t and "3,142" not in t
     assert "22,000" in render("approval_prompt", "en", count=2, total=D("22000"), code_spoken="1 2 3")
+
+
+def test_scoreboard_shows_a_trap_the_owner_let_through():
+    e = Engine(live=False)
+    s = e.start_callback("F"); e.finish_callback(s.id, "one one nine one"); e.approve_account_change("F", "2468")
+    sb = e.scoreboard()
+    assert "F" in sb["traps_missed"] and "F" not in sb["traps_blocked"] + sb["traps_held_ask"]

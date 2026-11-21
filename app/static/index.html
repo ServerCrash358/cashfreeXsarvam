@@ -486,7 +486,7 @@ function renderPay(){const ps=S.invoices.flatMap(i=>i.payouts.map(p=>({...p,vend
 async function simRev(tid){try{const r=await post('/api/simulate/webhook',{transfer_id:tid,status:'REVERSED'});toast('Reversal webhook applied: '+(r.state||JSON.stringify(r)))}catch(e){toast(e.message)}load()}
 function renderScore(){const s=S.scoreboard;
   const k=(t,v,sub)=>`<div class="kpi"><div class="k">${t}</div><div class="v">${v}</div><div class="s">${sub}</div></div>`;
-  $('score').innerHTML=`<div class="kpis">${k('Traps blocked',`${s.traps_blocked.length}/${s.traps}`,(s.traps_blocked.join(', ')||'none')+(s.traps_held_ask.length?' · held: '+s.traps_held_ask.join(', '):''))}
+  $('score').innerHTML=`<div class="kpis">${k('Traps blocked',`${s.traps_blocked.length}/${s.traps}`,(s.traps_blocked.join(', ')||'none')+(s.traps_held_ask.length?' · held: '+s.traps_held_ask.join(', '):'')+((s.traps_missed||[]).length?' · approved by owner: '+s.traps_missed.join(', '):''))}
    ${k('Clean auto-paid',`${s.clean_auto_paid.length}/${s.clean}`,s.clean_auto_paid.join(', ')||'none')}${k('Clean falsely held',s.clean_falsely_held.length,'false blocks: '+s.clean_false_blocks.length)}</div>
    <span class="claim">${IC.info}${esc(s.claim)}</span>`}
 async function tab(b){document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b));$('score').style.display=b.dataset.t==='score'?'':'none';$('audit').style.display=b.dataset.t==='audit'?'':'none';

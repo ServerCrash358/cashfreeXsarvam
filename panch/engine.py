@@ -496,10 +496,11 @@ class Engine:
         out = lambda k: self.state[k]["decision"].outcome
         blocked = [k for k in traps if out(k) == Outcome.BLOCK]
         held = [k for k in traps if out(k) == Outcome.ASK]
+        missed = [k for k in traps if out(k) in (Outcome.PAY, Outcome.DEFER)]   # a trap that got through (e.g. owner approved it)
         auto = [k for k in clean if out(k) in (Outcome.PAY, Outcome.DEFER)]
         false_held = [k for k in clean if out(k) == Outcome.ASK and self.state[k]["payment"] != "reversed"]
         false_block = [k for k in clean if out(k) == Outcome.BLOCK]
-        return {"traps": len(traps), "traps_blocked": blocked, "traps_held_ask": held,
+        return {"traps": len(traps), "traps_blocked": blocked, "traps_held_ask": held, "traps_missed": missed,
                 "clean": len(clean), "clean_auto_paid": auto, "clean_falsely_held": false_held,
                 "clean_false_blocks": false_block,
                 "claim": "zero false blocks on our clean controls, measured" if not false_block else "false blocks present"}
