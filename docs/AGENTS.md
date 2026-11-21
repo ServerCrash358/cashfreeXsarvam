@@ -20,7 +20,7 @@ This repo is the team's build for the **Sarvam x Cashfree Buildathon (Bengaluru,
 - **Every payment traces** to its invoice, its checks and its approver (audit ledger).
 - **No Sarvam chatbot or LLM decides anything.** Sarvam is used only to read documents (Vision), hear speech (Saaras) and speak (Bulbul). Amounts and decisions come from deterministic code. Every explanation comes from a template per language.
 - **Amounts are `Decimal`, never `float`.** Paise precision. Round only at display.
-- **Never display, log or store a full Aadhaar number** (last four only), even though PS3 rarely needs it.
+- **Never display, log or store a full Aadhaar number** (last four only), even though PS3 rarely needs it. **Never log or display full bank account numbers** either (last four; full number only inside the beneficiary record).
 - **Never commit `.env` or any key.** Use `.env.example`. Use secrets in Relay; never paste keys into prompts.
 - **Synthetic data only.** Sandbox (test mode) only. No real customer data.
 - **Never silently correct a read value.** Uncertainty must be visible and goes to ASK.
@@ -70,3 +70,7 @@ A module is done when:
 - Auto-repay after a reversal.
 - A native Android app (the Pixel is not part of this build).
 - Anything Payment-Link-based for PS3 (that is the PS2 fallback only).
+- Anomaly-signal heuristics, reverse penny drop, multi-accountant roles, WhatsApp approvals, a vendor self-service portal, PO/GRN matching, a discount optimiser, Tally export or analytics.
+- The second-approver rule is **stretch only**: cut it before anything in P3.
+
+A one-page brief to paste into a coding agent is in [BUILD_PROMPT.md](BUILD_PROMPT.md).
