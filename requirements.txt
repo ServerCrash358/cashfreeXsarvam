@@ -1,0 +1,16 @@
+# Pinned to the versions installed in the team's .venv (Python 3.11) on 21 Nov 2026.
+fastapi==0.165.0
+starlette==1.10.0
+uvicorn==0.54.0
+httpx==0.28.1
+pydantic==2.14.4
+python-dotenv==1.2.4
+websockets==17.4
+sarvamai==0.1.48
+cashfree_pg==6.0.7
+
+# To add (not installed yet; pin the version once installed and verified):
+# pytest
+# rapidfuzz
+# Pillow
+# respx
