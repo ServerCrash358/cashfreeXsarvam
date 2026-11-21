@@ -17,7 +17,8 @@ from panch.voice.digits import numbers_from_speech
 
 TTL = timedelta(minutes=2)
 YES = {"yes", "haan", "han", "haa", "ha", "ok", "okay", "theek", "thik", "sari", "aamaa", "aama", "aam",
-       "हाँ", "हां", "हा", "ठीक", "ஆமா", "ஆம்", "சரி", "kar", "pay", "approve", "approved", "confirm"}
+       "हाँ", "हां", "हा", "ठीक", "ஆமா", "ஆம்", "சரி", "kar", "pay", "approve", "approved", "confirm",
+       "ஆமாம்", "aamaam", "haanji", "hanji", "जी"}   # "ஆமாம்" is what Saaras returned live
 NO = {"no", "nahi", "nahin", "mat", "ruko", "cancel", "stop", "नहीं", "नही", "मत", "இல்லை", "வேண்டாம்", "illai",
       "vendaam", "wait"}
 
@@ -44,6 +45,18 @@ def bundle_still_matches(bundle: Bundle) -> bool:
     return canonical_hash(bundle.items, bundle.cash_limit, bundle.created_at, bundle.nonce) == bundle.hash
 
 
+_BILL_AFTER_NUMBER = re.compile(r"(\d+)\s*(?:bills?|invoices?|बिल|பில்கள்|பில்)")
+
+
+def _merged_total_count(text: str, bundle: Bundle) -> bool:
+    """Saaras v4 number normalisation joins "baees hazaar, do bill" into "22002 बिल"
+    (observed live, IT-SARVAM S2, 21 Nov). Accept a number right before a bill word
+    only when it equals exactly total + count of this bundle."""
+    flat = re.sub(r"(?<=\d),(?=\d)", "", text)
+    target = int(bundle.total) + len(bundle.items)
+    return any(int(m.group(1)) == target for m in _BILL_AFTER_NUMBER.finditer(flat))
+
+
 def check_approval(bundle: Bundle, transcript_or_code: str, now: datetime,
                    channel: str = "voice") -> ApprovalResult:
     """Voice: yes + total + count + code. Typed: the 3-digit code. Either way a PIN tap follows."""
@@ -54,7 +67,9 @@ def check_approval(bundle: Bundle, transcript_or_code: str, now: datetime,
         reasons.append("expired")
     if not bundle_still_matches(bundle):
         reasons.append("bundle changed (hash mismatch)")
-    text = to_ascii_digits(transcript_or_code or "").lower()
+    # Saaras ends Hindi sentences with a danda ("कोड 026।"); it sits inside the Devanagari
+    # token range, so strip it or the code reads as "026।" (found in live IT-SARVAM S2)
+    text = to_ascii_digits(transcript_or_code or "").lower().replace("।", " ").replace("॥", " ")
     toks = set(re.findall(r"[\wऀ-ॿ஀-௿]+", text))
     nums = numbers_from_speech(text)
     code_ok = bundle.code in nums
@@ -67,6 +82,8 @@ def check_approval(bundle: Bundle, transcript_or_code: str, now: datetime,
             reasons.append("ambiguous or negative speech")
         total_ok = str(int(bundle.total)) in nums
         count_ok = str(len(bundle.items)) in nums
+        if not (total_ok and count_ok) and _merged_total_count(text, bundle):
+            total_ok = count_ok = True
     if not yes_ok:
         reasons.append("no clear yes")
     if not total_ok:

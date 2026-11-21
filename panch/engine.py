@@ -227,6 +227,13 @@ class Engine:
             reasons = confirm_pin(b, pin, self.cfg["pin_hash"], self.cfg["pin_salt"], datetime.now())
             if not reasons:
                 b.status = "approved"
+            elif "wrong PIN" in reasons:
+                # PR 4: three wrong PINs lock this bundle; the owner must make a fresh plan
+                fails = self.__dict__.setdefault("_pin_fails", {})
+                fails[bundle_id] = fails.get(bundle_id, 0) + 1
+                if fails[bundle_id] >= 3:
+                    b.status = "locked"
+                    reasons.append("locked after 3 wrong PINs: make a new plan")
             self.audit.append("approval_pin", {"ok": not reasons, "reasons": reasons, "bundle_hash": b.hash},
                               actor="owner", entity=bundle_id)
             return reasons

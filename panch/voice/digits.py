@@ -19,13 +19,18 @@ DIGIT_WORDS = {
     "நான்கு": 4, "நாலு": 4, "ஐந்து": 5, "அஞ்சு": 5, "ஆறு": 6, "ஏழு": 7, "எட்டு": 8, "ஒன்பது": 9,
     "onnu": 1, "rendu": 2, "moonu": 3, "naalu": 4, "anju": 5, "aaru": 6, "ezhu": 7, "ettu": 8, "ombodhu": 9,
     "ombadhu": 9,
+    # more spellings (PR 4): Tamil script and romanised variants, Hinglish
+    "இரெண்டு": 2, "ஒன்னு": 1, "ஒம்போது": 9, "பூஜ்யம்": 0,
+    "ondru": 1, "onru": 1, "irandu": 2, "moondru": 3, "naangu": 4, "nalu": 4, "aindhu": 5, "ainthu": 5,
+    "yezhu": 7, "onbadhu": 9, "onpathu": 9, "ombothu": 9, "poojyam": 0,
+    "shoonya": 0, "chheh": 6, "paach": 5,
 }
 REPEAT = {"double": 2, "triple": 3, "डबल": 2, "ट्रिपल": 3, "டபுள்": 2}
 _TOKEN = re.compile(r"[\wऀ-ॿ஀-௿]+")
 
 
 def _tokens(text: str) -> list[str]:
-    s = to_ascii_digits(text or "").lower()
+    s = to_ascii_digits(text or "").lower().replace("।", " ").replace("॥", " ")  # Hindi danda
     s = re.sub(r"(?<=\d),(?=\d)", "", s)          # 22,000 -> 22000
     return _TOKEN.findall(s)
 
