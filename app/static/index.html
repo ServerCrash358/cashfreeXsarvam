@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Panch</title>
+<style>
+:root{--bg:#f6f5f1;--card:#fff;--ink:#1d1b16;--mute:#6b665c;--line:#e4e0d6;--pay:#1f7a4d;--ask:#b26a00;--block:#b3261e;--defer:#4a5fa8;--accent:#2b2a6e}
+*{box-sizing:border-box}body{margin:0;font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Tamil","Noto Sans Devanagari",sans-serif;background:var(--bg);color:var(--ink)}
+header{display:flex;gap:12px;align-items:center;padding:12px 20px;background:var(--accent);color:#fff;flex-wrap:wrap}
+header h1{margin:0;font-size:20px;letter-spacing:.5px}header .sub{opacity:.8;font-size:12px}
+header .sp{flex:1}select,input,button,textarea{font:inherit}
+.chip{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600;color:#fff}
+.PAY{background:var(--pay)}.ASK{background:var(--ask)}.BLOCK{background:var(--block)}.DEFER{background:var(--defer)}
+.tag{display:inline-block;padding:1px 6px;border:1px solid var(--line);border-radius:6px;font-size:11px;color:var(--mute)}
+main{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:16px;padding:16px 20px;max-width:1500px;margin:0 auto}
+@media(max-width:1000px){main{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:16px}
+.card h2{margin:0 0 10px;font-size:15px}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:7px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;color:var(--mute);font-weight:600}tr.row{cursor:pointer}tr.row:hover{background:#faf8f3}tr.sel{background:#f1eefc}
+.native{font-size:12px;color:var(--mute)}.num{text-align:right;font-variant-numeric:tabular-nums}
+.reason{padding:8px 10px;border-left:3px solid var(--line);margin:6px 0;background:#fbfaf7;border-radius:4px}
+.reason.block{border-color:var(--block)}.reason.ask{border-color:var(--ask)}.reason.info{border-color:var(--pay)}
+details pre{font-size:11px;white-space:pre-wrap;word-break:break-word;background:#f7f6f2;padding:8px;border-radius:6px;max-height:240px;overflow:auto}
+button{padding:6px 12px;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:#fff;cursor:pointer}
+button.ghost{background:#fff;color:var(--accent)}button:disabled{opacity:.45;cursor:not-allowed}
+.row2{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0}
+input[type=text],input[type=password],input[type=number]{padding:6px 8px;border:1px solid var(--line);border-radius:8px;min-width:0}
+.big{font-size:22px;font-weight:700}.mute{color:var(--mute)}.ok{color:var(--pay);font-weight:600}.bad{color:var(--block);font-weight:600}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.kpi{border:1px solid var(--line);border-radius:10px;padding:10px}
+.kpi .v{font-size:24px;font-weight:700}.mono{font-family:ui-monospace,Consolas,monospace;font-size:12px}
+.tabs button{background:#fff;color:var(--accent)}.tabs button.on{background:var(--accent);color:#fff}
+#toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:8px 14px;border-radius:8px;display:none;max-width:90vw}
+</style>
+</head>
+<body>
+<header>
+  <h1>Panch</h1><span class="sub">pay the right bill, to the right person</span>
+  <span class="sp"></span>
+  <span id="mode" class="tag" style="color:#fff;border-color:#fff8"></span>
+  <label>Owner language <select id="lang"><option value="ta">தமிழ்</option><option value="hi">हिन्दी</option><option value="en">English</option></select></label>
+  <button class="ghost" onclick="resetAll()">Reset demo</button>
+</header>
+<main>
+<section>
+  <div class="card">
+    <h2>This week's bills <span class="mute" id="today"></span></h2>
+    <table><thead><tr><th>#</th><th>Vendor</th><th class="num">Amount ₹</th><th>MSME deadline</th><th>Lane</th><th>Decision</th><th>Payment</th></tr></thead>
+    <tbody id="rows"></tbody></table>
+  </div>
+  <div class="card" id="detail"><h2>Select a bill</h2><p class="mute">Every decision comes with its reasons, in your language, and the evidence behind them.</p></div>
+  <div class="card">
+    <div class="tabs row2"><button class="on" data-t="score" onclick="tab(this)">Scoreboard</button><button data-t="audit" onclick="tab(this)">Audit ledger</button></div>
+    <div id="score"></div><div id="audit" style="display:none"></div>
+  </div>
+</section>
+<section>
+  <div class="card" id="cbcard">
+    <h2>Vendor call-back (changed bank account)</h2>
+    <div id="cb"><p class="mute">Pick a bill in the CHANGED_ACCOUNT lane.</p></div>
+  </div>
+  <div class="card">
+    <h2>Plan under cash</h2>
+    <div class="row2">Cash available ₹ <input type="number" id="cash" value="30000" style="width:120px"><button onclick="doPlan()">Plan payments</button></div>
+    <div id="plan"></div>
+  </div>
+  <div class="card">
+    <h2>Approve the bundle</h2>
+    <div id="appr"><p class="mute">Make a plan first.</p></div>
+  </div>
+  <div class="card">
+    <h2>Payouts (Cashfree)</h2>
+    <div class="row2"><button class="ghost" onclick="post('/api/sweep').then(load)">Reconcile now</button><span class="mute">Auto-sweep every 60 s. API 200 = submitted, not paid.</span></div>
+    <div id="pay"></div>
+  </div>
+</section>
+</main>
+<div id="toast"></div>
+<script>
+let S=null, sel=null, cbSession=null, rec=null, chunks=[];
+const $=id=>document.getElementById(id);
+const lang=()=>$('lang').value;
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const inr=v=>v==null?'—':Number(v).toLocaleString('en-IN');
+function toast(t){const e=$('toast');e.textContent=t;e.style.display='block';clearTimeout(e._t);e._t=setTimeout(()=>e.style.display='none',3500)}
+async function post(u,b,form){const r=await fetch(u,{method:'POST',headers:form?{}:{'Content-Type':'application/json'},body:form?b:JSON.stringify(b||{})});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.detail||r.status);return j}
+async function load(){S=await (await fetch('/api/state?lang='+lang())).json();render()}
+function render(){
+  $('today').textContent='· today '+S.today;
+  $('mode').textContent='Payouts: '+S.payout_mode+' · '+S.payout_base.replace('https://','')+(S.verification_last_error?' · Secure ID: fixtures ('+S.verification_last_error+')':' · Secure ID: live');
+  $('rows').innerHTML=S.invoices.map(i=>`<tr class="row ${sel===i.id?'sel':''}" onclick="pick('${i.id}')">
+   <td><b>${i.id}</b></td><td>${esc(i.vendor)}<div class="native">${i.vendor_native!==i.vendor?esc(i.vendor_native)+' · ':''}${esc(i.number)} · ${i.language}</div></td>
+   <td class="num">${inr(i.total)}</td><td>${i.deadline?esc(i.deadline):'<span class="mute">none</span>'}<div class="native">${esc(i.enterprise_type||'')}</div></td>
+   <td><span class="tag">${i.lane}</span></td><td><span class="chip ${i.outcome}">${i.outcome}</span><div class="native">${i.codes.join(', ')}</div></td><td>${i.payment}</td></tr>`).join('');
+  if(sel)showDetail(sel);
+  renderScore();renderPlan();renderPay();
+  const f=S.invoices.find(i=>i.lane==='CHANGED_ACCOUNT'&&i.outcome!=='BLOCK');
+  if(!cbSession&&f)$('cb').innerHTML=`<p>Bill <b>${f.id}</b> (${esc(f.vendor)}) asks us to pay a <b>new account xx${f.account_last4}</b>. Payments to this vendor are frozen.</p><button onclick="startCb('${f.id}')">Call vendor on the number on file</button>`;
+}
+function pick(id){sel=id;render()}
+function showDetail(id){
+  const i=S.invoices.find(x=>x.id===id);
+  const key=JSON.stringify(i)+lang();if(window._dKey===key)return;window._dKey=key;
+  $('detail').innerHTML=`<h2>Bill ${i.id} · ${esc(i.vendor)} <span class="chip ${i.outcome}">${i.outcome}</span></h2>
+  <div class="row2"><span class="tag">${i.lane}</span><span class="tag">account xx${i.account_last4} · ${esc(i.ifsc)}</span><span class="tag">${esc(i.file)}</span></div>
+  ${i.reasons.map(r=>`<div class="reason ${r.severity}"><b>${r.code}</b><button class="ghost" style="float:right;padding:2px 8px" onclick='say(${JSON.stringify(r.text)})'>▶</button><div>${esc(r.text)}</div></div>`).join('')}
+  <details><summary>Evidence (native extraction, checks)</summary><pre>${esc(JSON.stringify({raw_native:i.raw_native,reasons:i.reasons.map(r=>({code:r.code,evidence:r.evidence}))},null,2))}</pre></details>`;
+}
+async function say(text){try{const r=await fetch('/api/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,lang:lang()})});if(!r.ok)throw new Error((await r.json()).detail);new Audio(URL.createObjectURL(await r.blob())).play()}catch(e){toast('Voice unavailable: '+e.message)}}
+async function sayIn(text,l){try{const r=await fetch('/api/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,lang:l})});if(!r.ok)throw new Error((await r.json()).detail);new Audio(URL.createObjectURL(await r.blob())).play()}catch(e){toast('Voice unavailable: '+e.message)}}
+async function startRec(btn){try{const st=await navigator.mediaDevices.getUserMedia({audio:true});chunks=[];rec=new MediaRecorder(st);rec.ondataavailable=e=>chunks.push(e.data);rec.start();btn.textContent='■ Stop';btn.onclick=()=>stopRec(btn)}catch(e){toast('Mic unavailable: '+e.message)}}
+function stopRec(btn){return new Promise(res=>{rec.onstop=()=>{rec.stream.getTracks().forEach(t=>t.stop());btn._blob=new Blob(chunks,{type:'audio/webm'});btn.textContent='● Re-record';btn.onclick=()=>startRec(btn);toast('Recorded. Now submit.');res()};rec.stop()})}
+async function startCb(id){try{cbSession=await post(`/api/invoices/${id}/callback`);renderCb()}catch(e){toast(e.message)}}
+function renderCb(res){
+  const s=cbSession;
+  $('cb').innerHTML=`<p>Calling <b>${esc(s.phone_used)}</b> (vendor master). <span class="mute">Number printed on the invoice (${esc(s.invoice_phone_ignored||'none')}) is ignored.</span></p>
+  <div class="reason info">${esc(s.prompt)} <button class="ghost" style="padding:2px 8px" onclick='sayIn(${JSON.stringify(s.prompt)},"${s.lang}")'>▶ Bulbul</button></div>
+  <div class="row2"><button class="ghost" id="cbmic" onclick="startRec(this)">● Record vendor reply</button><input type="text" id="cbtxt" placeholder="or type what the vendor said" style="flex:1"><button onclick="finishCb()">Submit</button></div>
+  ${res?`<div class="reason ${res.passed?'info':res.severity}"><b>${res.code}</b> ${res.passed?'matched':'did not match'} · heard “${esc(res.evidence.transcript)}” → ${esc(res.evidence.spoken_last4||'?')} vs invoice ${esc(res.evidence.invoice_account_last4)}</div>
+   ${res.passed?`<div class="row2">Approve account change: <input type="password" id="acpin" placeholder="PIN" style="width:90px"><button onclick="approveAcct('${s.invoice_id}')">Approve change</button></div>`:''}`:''}`;
+}
+async function finishCb(){const fd=new FormData();const b=$('cbmic')._blob;if(b)fd.append('audio',b,'reply.webm');else fd.append('transcript',$('cbtxt').value);
+  try{const r=await post(`/api/callbacks/${cbSession.id}/result`,fd,true);renderCb(r);await load();renderCb(r)}catch(e){toast(e.message)}}
+async function approveAcct(id){const r=await post(`/api/invoices/${id}/approve-account`,{pin:$('acpin').value});toast(r.ok?'Account added to vendor master (provenance: call-back)':r.reasons.join(', '));load()}
+async function doPlan(){try{await post('/api/plan',{cash:$('cash').value,lang:lang()});await load()}catch(e){toast(e.message)}}
+function renderPlan(){const p=S.plan;if(!p){$('plan').innerHTML='';return}
+  $('plan').innerHTML=`<div class="row2"><div><div class="mute">Pay now</div><div class="big">${p.chosen.join(' + ')||'—'}</div></div><div style="margin-left:24px"><div class="mute">Deduction protected</div><div class="big ok">₹${inr(p.protected)}</div></div><div style="margin-left:24px"><div class="mute">Naive (earliest first: ${p.naive_chosen.join('+')})</div><div class="big bad">₹${inr(p.naive_protected)}</div></div></div>
+  <div class="mute">Deferred: ${p.deferred.join(', ')||'none'} · MSME 43B(h): micro/small paid within 15 days (or agreed ≤45)</div>`;
+  const b=p.bundle;
+  const key=b.id+b.status+lang();if(window._apKey===key)return;window._apKey=key;
+  $('appr').innerHTML=`<div class="reason info">${esc(b.prompt)} <button class="ghost" style="padding:2px 8px" onclick='say(${JSON.stringify(b.prompt)})'>▶ Bulbul</button></div>
+  <div class="mono mute">bundle ${b.id} · hash ${b.hash.slice(0,16)}… · ${b.count} bills ₹${inr(b.total)} · code <b>${b.code}</b> · expires ${b.expires_at.slice(11)} · <b>${b.status}</b></div>
+  <div class="row2"><button class="ghost" id="apmic" onclick="startRec(this)">● Speak approval</button><input type="text" id="aptxt" placeholder="or type: haan, 2 bills, 22000, code ${b.code}" style="flex:1"><button onclick="voiceOk('${b.id}','voice')">Check</button><button class="ghost" onclick="voiceOk('${b.id}','typed')">Typed code only</button></div>
+  <div id="apres"></div>
+  <div class="row2">PIN tap (the authority): <input type="password" id="pin" style="width:90px" placeholder="PIN"><button onclick="pinOk('${b.id}')" ${b.status==='voice_ok'?'':'disabled'}>Confirm PIN</button><button onclick="execute('${b.id}')" ${b.status==='approved'?'':'disabled'}>Pay via Cashfree</button></div>`;
+}
+async function voiceOk(id,ch){const fd=new FormData();const b=$('apmic')._blob;if(b&&ch==='voice')fd.append('audio',b,'approve.webm');else fd.append('transcript',$('aptxt').value);fd.append('channel',ch);fd.append('lang',lang());
+  try{const r=await post(`/api/bundles/${id}/approve`,fd,true);await load();$('apres').innerHTML=`<div class="reason ${r.ok?'info':'block'}">${r.ok?'Voice/typed check passed. Now tap PIN.':'Rejected: '+esc(r.reasons.join('; '))}<div class="mute">heard: “${esc(r.transcript)}” · yes ${r.yes_ok} · total ${r.total_ok} · count ${r.count_ok} · code ${r.code_ok}</div></div>`}catch(e){toast(e.message)}}
+async function pinOk(id){const r=await post(`/api/bundles/${id}/pin`,{pin:$('pin').value});toast(r.ok?'Approved: bound to bundle hash, single use':'Refused: '+r.reasons.join(', '));load()}
+async function execute(id){try{await post(`/api/bundles/${id}/execute`);toast('Submitted to Cashfree');load()}catch(e){toast(e.message)}}
+function renderPay(){const ps=S.invoices.flatMap(i=>i.payouts.map(p=>({...p,vendor:i.vendor})));
+  $('pay').innerHTML=ps.length?`<table><tr><th>Bill</th><th>transfer_id</th><th>State</th><th></th></tr>${ps.map(p=>`<tr><td><b>${p.invoice_id}</b> ₹${inr(p.amount)}</td><td class="mono">${p.transfer_id}${p.simulated?' <span class="tag">SIMULATED</span>':''}<div class="native">cf ${esc(p.cf_transfer_id||'—')} · ${esc(p.status_code||'')}</div></td><td><span class="chip ${p.state==='SUCCESS'?'PAY':p.state==='REVERSED'||p.state==='FAILED'||p.state==='REJECTED'?'BLOCK':'ASK'}">${p.state}</span></td>
+   <td>${p.state==='SUCCESS'?`<button class="ghost" style="padding:2px 8px" onclick="simRev('${p.transfer_id}')">Simulate reversal webhook</button>`:''}</td></tr>`).join('')}</table>`:'<p class="mute">No payouts yet.</p>';
+  S.events.filter(e=>e.kind==='payout').slice(-3).forEach(e=>{if(!window._seen)window._seen={};const k=e.at+e.invoice+e.state;if(!_seen[k]){_seen[k]=1;toast(e.text)}})}
+async function simRev(tid){const r=await post('/api/simulate/webhook',{transfer_id:tid,status:'REVERSED'});toast('Signed webhook → '+JSON.stringify(r));load()}
+function renderScore(){const s=S.scoreboard;
+  $('score').innerHTML=`<div class="kpis"><div class="kpi"><div class="mute">Traps blocked</div><div class="v">${s.traps_blocked.length}/${s.traps}</div><div class="native">${s.traps_blocked.join(', ')}${s.traps_held_ask.length?' · held (ASK): '+s.traps_held_ask.join(', '):''}</div></div>
+  <div class="kpi"><div class="mute">Clean auto-paid</div><div class="v">${s.clean_auto_paid.length}/${s.clean}</div><div class="native">${s.clean_auto_paid.join(', ')}</div></div>
+  <div class="kpi"><div class="mute">Clean falsely held</div><div class="v">${s.clean_falsely_held.length}</div><div class="native">false blocks: ${s.clean_false_blocks.length}</div></div></div><p class="mute">${esc(s.claim)}</p>`}
+async function tab(b){document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b));$('score').style.display=b.dataset.t==='score'?'':'none';$('audit').style.display=b.dataset.t==='audit'?'':'none';
+  if(b.dataset.t==='audit'){const a=await (await fetch('/api/audit')).json();$('audit').innerHTML=`<p>Hash chain: <b class="${a.chain_ok?'ok':'bad'}">${a.chain_ok?'intact':'BROKEN'}</b> · ${a.entries.length} entries</p><pre class="mono" style="max-height:320px;overflow:auto;white-space:pre-wrap">${esc(a.entries.slice().reverse().map(e=>`#${e.id} ${e.at} ${e.actor} ${e.action} ${e.entity||''} ${JSON.stringify(e.payload)}  ${e.hash.slice(0,10)}`).join('\n'))}</pre>`}}
+async function resetAll(){await post('/api/reset');cbSession=null;sel=null;window._apKey=null;window._dKey=null;$('appr').innerHTML='<p class="mute">Make a plan first.</p>';load()}
+$('lang').onchange=load;load();setInterval(load,2000);
+</script>
+</body>
+</html>

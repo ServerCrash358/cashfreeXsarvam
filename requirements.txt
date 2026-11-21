@@ -8,9 +8,10 @@ python-dotenv==1.2.4
 websockets==17.4
 sarvamai==0.1.48
 cashfree_pg==6.0.7
+python-multipart==0.0.34
+pytest==9.2.0
 
 # To add (not installed yet; pin the version once installed and verified):
-# pytest
 # rapidfuzz
 # Pillow
 # respx

@@ -1,0 +1,1 @@
+Same goods, same amount, same date as {matched_number}, already {matched_status}. Only the number changed. Blocked.
