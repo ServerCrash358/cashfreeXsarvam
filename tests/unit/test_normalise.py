@@ -4,17 +4,12 @@ from decimal import Decimal
 
 import pytest
 
-from panch.normalise import (
-    canon_account,
-    canon_id,
-    has_traditional_tamil_numerals,
-    norm_invoice_number,
-    parse_amount,
-    parse_date,
-    parse_quantity,
-    vendor_key,
-    words_to_amount,
-)
+from panch.normalise.amounts import parse_amount, parse_quantity
+from panch.normalise.dates import parse_date
+from panch.normalise.invoice_number import norm_invoice_number
+from panch.normalise.names import vendor_key
+from panch.normalise.numerals import canon_account, canon_id, has_traditional_tamil_numerals
+from panch.normalise.words import words_to_amount
 
 
 # U-NORM-1..4 ---------------------------------------------------------------
