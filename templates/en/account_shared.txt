@@ -1,0 +1,1 @@
+This account belongs to another vendor ({other_vendor}). Blocked.

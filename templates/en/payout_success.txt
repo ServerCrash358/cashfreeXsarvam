@@ -1,0 +1,1 @@
+Paid {amount} to {vendor}. Bank confirmed.

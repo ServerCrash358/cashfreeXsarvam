@@ -1,0 +1,1 @@
+வரிகளின் கூட்டல் {sum_of_lines}, ஆனால் துணைத்தொகை {printed_subtotal}.

@@ -1,0 +1,1 @@
+Tax rate {effective_rate_pct}% is not a GST slab. Please check.

@@ -1,0 +1,1 @@
+Bank account changed to xx{invoice_account_last4} (on file: {known_accounts}). Payments frozen until we call the vendor on the number on file.
