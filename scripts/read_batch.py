@@ -24,8 +24,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from panch.reading import ReadingConfig, VisionCacheMiss, read_invoice  # noqa: E402
-from panch.reading.reader import iter_invoice_files  # noqa: E402
+from panch.reading.config import ReadingConfig  # noqa: E402
+from panch.reading.reader import VisionCacheMiss, iter_invoice_files, read_invoice  # noqa: E402
 from panch.reading.serialize import invoice_to_dict  # noqa: E402
 
 if hasattr(sys.stdout, "reconfigure"):

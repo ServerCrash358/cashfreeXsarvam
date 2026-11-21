@@ -6,8 +6,10 @@ from pathlib import Path
 
 import pytest
 
-from panch.reading import ReadingConfig, VisionCacheMiss, VisionClient, get_read_artifacts, read_invoice
+from panch.reading.config import ReadingConfig
+from panch.reading.reader import VisionCacheMiss, get_read_artifacts, read_invoice
 from panch.reading.schema import EXTRACT_SCHEMA
+from panch.reading.vision import VisionClient
 
 from .fakes import CLEAN_RESULT, ExplodingClient, FakeDocAi, FakeSdk, result_with
 
@@ -227,7 +229,7 @@ def test_serialize_round_trip_keeps_decimals_and_masks_account(tmp_path, cfg):
 
 
 def test_read_folder_reads_supported_files_only(tmp_path, cfg):
-    from panch.reading import read_folder
+    from panch.reading.reader import read_folder
     client, _ = _client(cfg, {"orig": ("completed", CLEAN_RESULT)})
     _pdf(tmp_path, "a.pdf", b"%PDF a")
     _pdf(tmp_path, "b.pdf", b"%PDF b")

@@ -2,47 +2,60 @@
 
 Decimals travel as strings and dates as ISO strings, so nothing becomes a
 float. The full account number is left out unless asked for.
+
+Field names come from panch/models.py at runtime (PR 2 owns it), so this
+works whatever fields Invoice and LineItem have, dataclass or pydantic v2.
 """
 from __future__ import annotations
 
-import dataclasses
 from datetime import date
 from decimal import Decimal
 from typing import Any
 
 from ..models import Invoice, LineItem
-from .mapping import mask_account
+from .mapping import make_invoice, make_line_item, mask_account, model_fields
 
 _DECIMAL_ATTRS = {"subtotal", "tax", "total", "words_amount", "discount", "cgst", "sgst", "igst"}
+_LINE_DECIMAL_ATTRS = {"qty", "rate", "amount", "discount"}
+
+
+def _line_to_dict(line: LineItem) -> dict:
+    out = {}
+    for name in model_fields(type(line)):
+        v = getattr(line, name)
+        out[name] = str(v) if isinstance(v, Decimal) else v
+    return out
 
 
 def invoice_to_dict(inv: Invoice, *, include_account: bool = False) -> dict:
     d: dict[str, Any] = {}
-    for f in dataclasses.fields(inv):
-        v = getattr(inv, f.name)
-        if f.name == "account_number":
+    for name in model_fields(type(inv)):
+        v = getattr(inv, name)
+        if name == "account_number":
             d["account_number"] = v if include_account else None
             d["account_last4_masked"] = mask_account(v)
-        elif f.name == "lines":
-            d["lines"] = [{"item_key": l.item_key, "qty": str(l.qty), "rate": str(l.rate),
-                           "amount": str(l.amount)} for l in v]
+        elif name == "lines":
+            d["lines"] = [_line_to_dict(l) for l in v]
         elif isinstance(v, Decimal):
-            d[f.name] = str(v)
+            d[name] = str(v)
         elif isinstance(v, date):
-            d[f.name] = v.isoformat()
+            d[name] = v.isoformat()
         else:
-            d[f.name] = v
+            d[name] = v
     return d
 
 
 def invoice_from_dict(d: dict) -> Invoice:
-    kw = {k: v for k, v in d.items() if k in {f.name for f in dataclasses.fields(Invoice)}}
+    kw = {k: v for k, v in d.items() if k in model_fields(Invoice)}
     for k in _DECIMAL_ATTRS:
         if kw.get(k) is not None:
             kw[k] = Decimal(kw[k])
     if kw.get("date"):
         kw["date"] = date.fromisoformat(kw["date"])
-    kw["lines"] = [LineItem(item_key=l["item_key"], qty=Decimal(l["qty"]), rate=Decimal(l["rate"]),
-                            amount=Decimal(l["amount"])) for l in kw.get("lines", [])]
+    kw["lines"] = [
+        make_line_item(**{k: Decimal(v) if k in _LINE_DECIMAL_ATTRS and v is not None else v
+                          for k, v in l.items()})
+        for l in kw.get("lines", [])
+    ]
     kw.setdefault("account_number", None)
-    return Invoice(**kw)
+    return make_invoice(**kw)

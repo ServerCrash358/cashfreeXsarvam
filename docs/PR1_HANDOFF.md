@@ -1,10 +1,15 @@
 # PR1_HANDOFF.md: what PR 2 gets from `read_invoice`
 
 ```python
-from panch.reading import read_invoice, get_read_artifacts
+from panch.reading.reader import read_invoice, get_read_artifacts
 inv = read_invoice("data/demo/inv_B_ta.png")          # -> panch.models.Invoice
 art = get_read_artifacts(inv)                         # crops, per-variant values, reasons
 ```
+
+## Imports
+Import `read_invoice` (and `read_folder`, `get_read_artifacts`, `VisionCacheMiss`) from `panch.reading.reader`, not from `panch.reading`. Main's `panch/reading/__init__.py` and `panch/normalise/__init__.py` are left as they are: they hold main's own `invoice_from_extract` and normalisers, and PR 1 does not depend on them. PR 1's code is in the submodules: `panch.reading.reader`, `.config` (`ReadingConfig`), `.vision` (`VisionClient`, `JobOutput`), `.serialize`, and `panch.normalise.amounts`, `.dates`, `.words`, `.names`, `.invoice_number`, `.numerals`, `.translit`.
+
+`panch/models.py` is PR 2's. PR 1 never calls `Invoice(...)` or `LineItem(...)` directly: `panch.reading.mapping.make_invoice` / `make_line_item` pass only the fields the model has (dataclass or pydantic v2) and set any required field PR 1 does not know to `None`.
 
 ## Keys
 `inv.stable`, `inv.confidence`, `inv.raw_native` and `inv.pages` use **Invoice attribute names**: `number`, `date`, `vendor_name`, `gstin`, `buyer_gstin`, `po_number`, `subtotal`, `discount`, `cgst`, `sgst`, `igst`, `tax`, `total`, `words_amount`, `payee_name`, `account_number`, `ifsc`, `upi_id`, `vendor_phone_on_invoice`, `delivery_date`, and `lines`. Line raw strings are `raw_native["lines[0].qty"]` and so on.
@@ -16,11 +21,12 @@ art = get_read_artifacts(inv)                         # crops, per-variant value
 - Incomplete line rows (qty, rate or amount unreadable) are left out of `inv.lines` and set `stable["lines"] = False`. `LineItem` cannot hold None.
 - `date_ambiguous` is only True for a two-digit-year date whose day and month could swap. It is evidence; on its own it should not trigger ASK.
 - `tax` is the printed tax total only. It is never computed from CGST + SGST.
-- `discount` is the invoice-level discount, or the sum of row discounts when only rows have one (`art["discount_source"]` says which). `LineItem` has no discount field, so `ARITH_LINE` on a discounted row needs `raw_native["lines[i].discount"]`.
+- `discount` is the invoice-level discount, or the sum of row discounts when only rows have one (`art["discount_source"]` says which). A row's discount is also passed to `LineItem.discount` when the model has that field (main's does), so `ARITH_LINE` can use it directly. An unread row discount leaves the model default.
 
 ## Privacy
-- `inv.account_number` is the only place the full number lives. `raw_native`, artifacts, exports and `repr(inv)` show `XXXX` plus the last four.
+- `inv.account_number` is the only place the full number lives. `raw_native`, artifacts and exports show `XXXX` plus the last four.
+- `Invoice.account_number` has `field(repr=False)` on main, so `repr(inv)` never prints the full number.
 - `data/cache/` holds raw Vision output and is git-ignored.
 
 ## Not in `Invoice` (raise a small PR on `models.py` if you need them)
-`delivery_date` and `upi_id` are in `art["extra"]`. Per-line discount is in `raw_native`. Crop boxes are in `art["crops"]`.
+`delivery_date` and `upi_id` are in `art["extra"]`. Per-line discount is also in `raw_native`. Crop boxes are in `art["crops"]`.
