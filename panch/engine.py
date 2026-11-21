@@ -89,6 +89,20 @@ class Engine:
             for inv_id in self.invoices:
                 self.evaluate(inv_id)
 
+    def add_invoice(self, inv: Invoice, filename: str) -> str:
+        """A newly read invoice (live Vision upload or curveball batch) joins the batch and is decided."""
+        with _lock:
+            if inv.id in self.invoices:
+                self.audit.append("intake_duplicate_file", {"file": filename}, entity=inv.id)
+                return inv.id                      # same file twice: one queue keyed by file hash
+            self.invoices[inv.id] = inv
+            self.raw[inv.id] = {"file": filename}
+            self.expected[inv.id] = None
+            self.audit.append("invoice_ingested", {"file": filename, "source_hash": inv.source_hash,
+                                                   "language": inv.language}, entity=inv.id)
+            self.evaluate(inv.id)
+            return inv.id
+
     def vendor(self, vid: Optional[str]) -> Optional[Vendor]:
         return next((v for v in self.vendors if v.id == vid), None)
 

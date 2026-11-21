@@ -24,8 +24,7 @@ Import `read_invoice` (and `read_folder`, `get_read_artifacts`, `VisionCacheMiss
 - `discount` is the invoice-level discount, or the sum of row discounts when only rows have one (`art["discount_source"]` says which). A row's discount is also passed to `LineItem.discount` when the model has that field (main's does), so `ARITH_LINE` can use it directly. An unread row discount leaves the model default.
 
 ## Privacy
-- `inv.account_number` is the only place the full number lives. `raw_native`, artifacts and exports show `XXXX` plus the last four.
-- **Open for PR 2:** main's `models.py` has no `field(repr=False)` on `Invoice.account_number`, so `repr(inv)` (and any log of it) prints the full number. The repr check in `test_privacy_full_account_never_in_repr_raw_native_or_artifacts` skips until that lands.
+- `inv.account_number` is the only place the full number lives. `raw_native`, artifacts and exports show `XXXX` plus the last four; `repr(inv)` leaves it out (`field(repr=False)` in `models.py`).
 - `data/cache/` holds raw Vision output and is git-ignored.
 
 ## Not in `Invoice` (raise a small PR on `models.py` if you need them)

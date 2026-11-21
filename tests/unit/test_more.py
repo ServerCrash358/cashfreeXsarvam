@@ -332,3 +332,26 @@ def test_api_typed_code_fallback_and_wrong_code(client):
     wrong = str((int(code) + 1) % 1000).zfill(3)
     assert not c.post(f"/api/bundles/{bid}/approve", data={"transcript": wrong, "channel": "typed"}).json()["ok"]
     assert c.post(f"/api/bundles/{bid}/approve", data={"transcript": code, "channel": "typed"}).json()["ok"]
+
+
+def test_api_upload_reads_and_decides(client, monkeypatch):
+    """Upload path: file -> read_invoice (stubbed: no Sarvam call) -> engine gate; same file twice is one invoice."""
+    c, m = client
+    c.post("/api/reset")
+    import panch.reading as reading
+    raw = copy.deepcopy(RAW["E"]); raw["id"] = "inv_upload_e"
+    monkeypatch.setattr(reading, "read_invoice", lambda path, **kw: invoice_from_extract(raw))
+    r = c.post("/api/upload", files=[("files", ("e.png", b"fake", "image/png"))]).json()["results"][0]
+    assert r["id"] == "inv_upload_e" and r["outcome"] == "BLOCK" and "ARITH_TOTAL" in r["codes"]
+    c.post("/api/upload", files=[("files", ("e.png", b"fake", "image/png"))])
+    assert sum(1 for i in c.get("/api/state").json()["invoices"] if i["id"] == "inv_upload_e") == 1
+
+
+def test_api_upload_bad_read_never_crashes(client, monkeypatch):
+    c, _ = client
+    import panch.reading as reading
+    def boom(path, **kw):
+        raise RuntimeError("vision down")
+    monkeypatch.setattr(reading, "read_invoice", boom)
+    r = c.post("/api/upload", files=[("files", ("x.png", b"x", "image/png"))])
+    assert r.status_code == 200 and "vision down" in r.json()["results"][0]["error"]
