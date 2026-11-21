@@ -26,7 +26,7 @@ python -m venv .venv
 .venv/Scripts/pip install -r requirements.txt
 ```
 
-Copy `.env.example` to `.env` and fill in your test keys (never commit `.env`). For webhooks, set an ngrok authtoken with `ngrok config add-authtoken <token>`.
+Copy `.env.example` to `.env` and fill in your test keys (never commit `.env`). The demo runs on one laptop: payout status comes from the 60-second status sweep, so no public webhook URL (ngrok) is needed.
 
 ## Run the stable build
 

@@ -74,6 +74,7 @@
 | GSTIN / Udyam verification | Called for new vendors. Sandbox data only covers a few published IDs, so others come back unverifiable, which asks |
 | Cashfree Payouts | **Live call made:** beneficiary created and transfer `667850829` accepted (RECEIVED), then **rejected `ERROR_SELECTING_FUND_SOURCE`**, because our test Payouts account has no funded fund source. Success, pending and reversal are therefore shown in **simulated mode**, labelled SIMULATED in the UI, through the same state machine, ledger and signed-webhook verifier |
 | Invoices, vendors, accounts | Synthetic, built on Cashfree's published sandbox test accounts |
+| Payout webhooks | The demo runs on one laptop with no public URL, so Cashfree cannot deliver webhooks to us. Status comes from the **60-second status sweep** (the second path to the truth). The receiver and its signature check are built and tested, and the reversal step is shown with a labelled simulated event |
 
 ## 5. Measured results (our own labelled set, not the unseen batch)
 
