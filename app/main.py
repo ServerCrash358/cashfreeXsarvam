@@ -1,4 +1,4 @@
-"""Panch FastAPI app. Run: .venv/Scripts/python -m uvicorn app.main:app --port 8000"""
+"""TijoriPay FastAPI app. Run: .venv/Scripts/python -m uvicorn app.main:app --port 8000"""
 from __future__ import annotations
 
 import asyncio
@@ -22,7 +22,8 @@ load_dotenv(ROOT / ".env")
 from panch.engine import Engine, _j  # noqa: E402
 from panch import voice  # noqa: E402
 
-engine = Engine(live=True)
+import os  # noqa: E402
+engine = Engine(live=os.getenv("TIJORIPAY_OFFLINE") != "1")   # tests set TIJORIPAY_OFFLINE=1
 
 
 @asynccontextmanager
@@ -39,7 +40,7 @@ async def lifespan(app):
     task.cancel()
 
 
-app = FastAPI(title="Panch", lifespan=lifespan)
+app = FastAPI(title="TijoriPay", lifespan=lifespan)
 
 
 def _plan_view(lang: str):

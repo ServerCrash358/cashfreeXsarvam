@@ -1,4 +1,4 @@
-"""Panch engine: wires the pure modules to state, Cashfree and Sarvam. One instance per app."""
+"""TijoriPay engine: wires the pure modules to state, Cashfree and Sarvam. One instance per app."""
 from __future__ import annotations
 
 import copy
@@ -273,7 +273,7 @@ class Engine:
                 self.audit.append("beneficiary", {"http": code, "status": body.get("beneficiary_status"),
                                                   "code": body.get("code")}, entity=inv.id)
                 apply_event(att, "SENT", source="api")
-                code, body = self.payouts.transfer(tid, it.amount, it.beneficiary_id, remarks=f"Panch inv {inv.id}")
+                code, body = self.payouts.transfer(tid, it.amount, it.beneficiary_id, remarks=f"TijoriPay inv {inv.id}")
                 self._apply_cf(att, body, "api_response", http=code)
             except TimeoutError as e:
                 apply_event(att, "UNKNOWN", source=f"api {e}")
