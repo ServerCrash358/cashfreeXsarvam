@@ -1,0 +1,1 @@
+{count} bills, total {total} rupees. Say yes, the count, the total, and the code {code_spoken}. Then tap your PIN.

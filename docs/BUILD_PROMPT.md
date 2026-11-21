@@ -3,7 +3,7 @@
 Adapted from the team's `panch-build-prompt.md` and aligned with ARCHITECTURE v3. If anything here disagrees with [ARCHITECTURE.md](ARCHITECTURE.md), ARCHITECTURE wins.
 
 ## 1. Mission
-Build **Panch**, an end-to-end demo for PS3 (pay the right bill, to the right person):
+Build **TijoriPay**, an end-to-end demo for PS3 (pay the right bill, to the right person):
 - Read a batch of multilingual invoices (Tamil, Hindi, English; printed and handwritten).
 - Pay only what survives a deterministic gate.
 - Confirm changed bank details by calling the vendor's number on file.

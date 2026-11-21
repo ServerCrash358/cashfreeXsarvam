@@ -1,0 +1,1 @@
+Call-back on the number on file: vendor said {spoken_last4}, invoice says {invoice_account_last4}. Account change rejected. Blocked.

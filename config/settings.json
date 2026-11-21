@@ -1,0 +1,26 @@
+{
+  "_note": "Demo settings. owner PIN is a TEST value for the local demo only (PIN 2468).",
+  "today": "2026-11-21",
+  "cash_limit": "30000",
+  "next_run_days": 7,
+  "owner_lang": "ta",
+  "name_pass": 85,
+  "name_ask": 60,
+  "line_tolerance": "0.01",
+  "total_tolerance": "1.00",
+  "gst_slabs": [
+    0,
+    5,
+    12,
+    18,
+    28
+  ],
+  "per_invoice_limit": "100000",
+  "dup_fuzzy_total_pct": "1",
+  "dup_fuzzy_days": 7,
+  "dup_new_period_days": 25,
+  "pin_salt": "panch-demo",
+  "pin_hash": "7cce6cac9d035646eb4934301706d4ac2b11caf285058fbe49f3b4cdfe9138b4",
+  "payout_mode": "sim",
+  "sweep_seconds": 60
+}

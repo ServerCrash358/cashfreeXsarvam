@@ -1,0 +1,16 @@
+{
+  "_note": "Canned copies of Cashfree Secure ID sandbox test data (docs/DEPENDENCIES.md). Used only when the live sandbox call fails (e.g. IP not whitelisted); every result is marked canned=true and disclosed.",
+  "bank": {
+    "026291800001191": {"account_status": "VALID", "account_status_code": "ACCOUNT_IS_VALID", "name_at_bank": "JOHN DOE", "name_match_score": "100.00", "name_match_result": "DIRECT_MATCH"},
+    "1233943142": {"account_status": "VALID", "account_status_code": "ACCOUNT_IS_VALID", "name_at_bank": "TOM WELLS", "name_match_score": "38.00", "name_match_result": "POOR_PARTIAL_MATCH"},
+    "388108022658": {"account_status": "VALID", "account_status_code": "ACCOUNT_IS_VALID", "name_at_bank": "BOB HOPE", "name_match_score": "38.00", "name_match_result": "POOR_PARTIAL_MATCH"}
+  },
+  "gstin": {
+    "29AAICP2912R1ZR": {"valid": true, "legal_name_of_business": "Sandbox Test Business", "gst_in_status": "Active"}
+  },
+  "udyam": {
+    "UDYAM-UP-43-1234567": {"status": "SUCCESS", "enterprise_type": "Small"},
+    "UDYAM-MH-43-1234567": {"status": "UDYAM_NOT_FOUND"},
+    "UDYAM-KA-43-1234567": {"status": "UDYAM_IS_CANCELLED"}
+  }
+}

@@ -1,0 +1,1 @@
+Payment of {amount} to {vendor} came back (reversed). Bill reopened; it needs re-verification and a fresh approval. Not re-sent automatically.

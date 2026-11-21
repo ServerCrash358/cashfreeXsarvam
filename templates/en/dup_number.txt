@@ -1,0 +1,1 @@
+Invoice number already paid (same financial year). Blocked.

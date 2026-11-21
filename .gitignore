@@ -7,3 +7,12 @@ __pycache__/
 .gradle/
 build/
 local.properties
+data/runtime/
+.claude/settings.local.json
+*.pem
+data/eval/
+
+# PR 1: raw Vision output holds account numbers
+data/cache/
+data/probe/
+data/demo_reads/

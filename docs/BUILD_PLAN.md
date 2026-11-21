@@ -1,4 +1,4 @@
-# Build plan (working name: **Panch**)
+# Build plan (working name: **TijoriPay**)
 
 **Status:** v3, 21 Nov 2026. This is the decision report and history. **[ARCHITECTURE.md](ARCHITECTURE.md) is canonical** wherever the two differ.
 
@@ -21,7 +21,7 @@
 
 ## 1. What we are building (plain language)
 
-Raghu's accountant retypes about sixty multilingual invoices into a banking portal every Friday. Panch replaces the retyping and the guessing:
+Raghu's accountant retypes about sixty multilingual invoices into a banking portal every Friday. TijoriPay replaces the retyping and the guessing:
 
 1. It reads a batch of invoices (Tamil, Hindi, English; printed and handwritten).
 2. It checks each one: do the numbers agree, has it been paid before in disguise, is the vendor real, does the bank account belong to that vendor.
@@ -53,7 +53,7 @@ Open question: whether Sarvam Vision (reading invoices) counts under the "Sarvam
 - The official problem statements replaced free choice. The user leans PS3.
 - Wave 1 (this session): three ideators proposed three unique takes per problem statement; a reality miner checked competition and rules; a docs verifier checked the Cashfree sandbox.
 - Wave 2 (done): three blind, shuffled hostile critics ranked 12 takes (4 per problem statement) on Cashfree depth and demonstrability, unseen-batch robustness, and build/demo risk. Average rank (1 = best): T10 bank-detail quarantine 2.7, T9 invoice fingerprint 3.3, T12 scarcity-ordered queue 4.0, T3 invariant gate (PS1) 5.0, T4 confidence-map court (PS1) 6.0, T11 signed pay-plan 6.3, T2 four-way name verdict (PS1) 6.7, T5 cash-in scheduler (PS2) 7.0, T8 allowlist ranker (PS2) 7.7, T7 seeded exploration (PS2) 8.7, T6 claim ledger (PS2) 9.3, T1 spoken read-back (PS1) 11.3.
-  - The three best average ranks are all PS3 takes, and all three critics suggested combining them: detection from T9 and T10, ordering and execution from T12. That combination is Panch.
+  - The three best average ranks are all PS3 takes, and all three critics suggested combining them: detection from T9 and T10, ordering and execution from T12. That combination is TijoriPay.
   - Dissent: the robustness critic guessed PS1 is the least crowded (about 6-8 teams, against 12-14 on PS3) and picked T3. That crowd estimate is a guess. The demo-risk critic found PS3 has the most published sandbox support for a live payment, provided Payouts can be funded.
   - Cut: T1, T6, and T7 as a headline. T11's signed plan is reduced to a light confirmation, because it catches none of the planted traps.
   - Fallbacks: section 17.

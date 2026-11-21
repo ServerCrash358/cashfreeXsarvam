@@ -1,0 +1,17 @@
+{
+  "_comment": "PR 1 reading config. Thresholds live here, never in code.",
+  "default_language": "en-IN",
+  "variants": ["orig", "binar", "up2x"],
+  "extract_mode": "basic",
+  "extract_send_language": false,
+  "parse_for_crops": false,
+  "parse_content_type": "mixed",
+  "poll_interval_s": 3,
+  "job_timeout_s": 300,
+  "max_parallel_jobs": 4,
+  "status_retries": 4,
+  "min_confidence": null,
+  "upscale_max_side": 4000,
+  "cache_dir": "data/cache/vision",
+  "offline": false
+}
