@@ -13,6 +13,14 @@ The pure heart of Panch: given an `Invoice` (and vendor history), return `CheckR
 - `config/thresholds.yaml`: tolerances, fuzzy thresholds, name-match bands (no hard-coded values in logic).
 - `templates/{en,hi,ta}/`: one message file per reason code (placeholders only; native-speaker review later).
 
+## v3 additions (priority: P0 and P1)
+- **P0** `ARITH_GST_SPLIT` (taxable = qty x rate - discount; same state code → CGST = SGST, no IGST; different → IGST only; BLOCK only if both GSTINs read stable, else ASK).
+- **P0** duplicates on **two tracks**: hard keys (GSTIN, account + IFSC, PO number) and soft keys (transliterated name, amount, date window, line fingerprint); a duplicate needs one hard key plus the economic match, or two independent soft signals; always emit score + evidence.
+- **P0** `DUP_NUMBER`: same vendor + same normalised number (financial year kept) already paid → BLOCK.
+- **P1** routing: heuristic duplicates → ASK; true-by-construction invariant failures → BLOCK; `NEW_VENDOR` → ASK.
+- GSTIN checksum stays a **soft** flag (sandbox test GSTINs may fail a real checksum).
+- Extra tests: `U-CHK-10` to `U-CHK-13`, `U-FP-8` to `U-FP-10`.
+
 ## Tests to implement (offline)
 `U-CHK-1` to `U-CHK-9`, `U-FP-1` to `U-FP-7` (including the legitimate twins), `U-DEC-1` to `U-DEC-7` from [docs/UNIT_TESTS.md](../UNIT_TESTS.md).
 
