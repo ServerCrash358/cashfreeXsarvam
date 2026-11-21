@@ -143,6 +143,28 @@ Cash Rs 30,000; H 4,000 (deadline 1 day), A 12,400 (3 days), B 18,000 (5 days), 
 | U-PRIV-1 | mask `"655675523712"` | `"XXXX XXXX 3712"` |
 | U-PRIV-2 | logs after a full run | no 12-digit Aadhaar and no full account numbers |
 
+### Additional cases (v3)
+| ID | Case | Expected |
+|---|---|---|
+| U-NORM-15 | `"42/2025-26"` vs `"42/2026-27"` | different normalised numbers (financial year kept) |
+| U-NORM-16 | GSTIN, account, IFSC with Tamil/Devanagari digits | converted to ASCII, otherwise byte-for-byte |
+| U-NORM-17 | same vendor name transliterated twice (cached) | identical output |
+| U-CHK-10 | vendor and buyer GSTIN both state 33; taxable 10,500; CGST 9% = 945 and SGST 9% = 945 | pass (945 + 945 = 1,890) |
+| U-CHK-11 | vendor state 29, buyer state 33, CGST + SGST charged | BLOCK `ARITH_GST_SPLIT` |
+| U-CHK-12 | same as U-CHK-11 but a GSTIN read is unstable | ASK, not BLOCK |
+| U-CHK-13 | line 10 x 450 with discount 500 | taxable 4,000 |
+| U-FP-8 | same vendor, same normalised number incl. financial year, already paid | BLOCK `DUP_NUMBER` |
+| U-FP-9 | two different vendors (different GSTINs and accounts), identical amount and lines | not a duplicate |
+| U-FP-10 | duplicate decision without a hard key and with only one soft signal | not BLOCK |
+| U-VEN-12 | unknown vendor | ASK `NEW_VENDOR`; after GST + Udyam + bank verification and owner onboarding → `KNOWN` |
+| U-VEN-13 | `CHANGED_ACCOUNT` lane | all pending payments to that vendor frozen until resolved |
+| U-PAY-14 | a second active transfer for the same invoice | refused by the ledger |
+| U-PAY-15 | confirmed + in-flight + new amount > invoice amount | refused |
+| U-PAY-16 | transfer stuck in PENDING with no webhook | sweep polls and resolves it |
+| U-PAY-17 | API returns 200 | state SENT/PENDING, invoice not marked paid |
+| U-APR-10 | valid spoken confirmation but no PIN | not authorised |
+| U-APR-11 | bundle above threshold or with a `CHANGED_ACCOUNT` item | needs a second approver's PIN |
+
 ## 3. Evaluation harness (scoreboard)
 
 **Purpose:** measure what the curveball measures, honestly.
@@ -153,9 +175,10 @@ Cash Rs 30,000; H 4,000 (deadline 1 day), A 12,400 (3 days), B 18,000 (5 days), 
 - Mutations are generated at the **text/field level**; about 40 documents run through the full pipeline offline (rendering 200 images through Vision live is not feasible).
 - A teammate who has not seen the checks plants a **blind** set of 10 for a final run.
 
-**Report two headline numbers:**
-1. **Traps caught (BLOCK)** = traps with outcome BLOCK / all traps.
+**Report three headline numbers, separately:**
+1. **Traps blocked** = traps with outcome BLOCK / all traps.
 2. **Clean auto-paid rate** = clean invoices that entered the bundle without a question / all clean invoices.
+3. **Clean falsely held** = clean invoices that got ASK / all clean invoices.
 
 Also report: false holds (ASK on clean), false blocks (BLOCK on clean), traps that only reached ASK, per-check catch and false-block counts, and the threshold sweep for `DUP_FUZZY` and the name-match band. Show results under both interpretations of ASK until the organisers answer.
 
