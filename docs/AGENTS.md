@@ -24,6 +24,11 @@ This repo is the team's build for the **Sarvam x Cashfree Buildathon (Bengaluru,
 - **Never commit `.env` or any key.** Use `.env.example`. Use secrets in Relay; never paste keys into prompts.
 - **Synthetic data only.** Sandbox (test mode) only. No real customer data.
 - **Never silently correct a read value.** Uncertainty must be visible and goes to ASK.
+- **Never translate fields used for matching or money** (GSTIN, invoice number, account, IFSC, amounts, dates). Extract, canonicalise in code, keep the native string as evidence. Vendor names are transliterated, never translated.
+- **Voice never authorises alone.** A PIN tap bound to the bundle hash is the authority.
+- **Call-backs use the vendor-master phone only**, never a number printed on the invoice.
+
+Build order is P0 → P3 in [ARCHITECTURE.md](ARCHITECTURE.md) section 0.
 
 ## Open questions that change the code
 

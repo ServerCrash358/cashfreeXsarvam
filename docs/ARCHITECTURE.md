@@ -2,6 +2,18 @@
 
 Where any other doc disagrees with this one, this one wins. Items marked UNVERIFIED have not been confirmed in docs or a real run.
 
+## 0. Priorities (build in this order)
+
+| Priority | What | Modules |
+|---|---|---|
+| **P0** | True-by-construction invariants (arithmetic incl. GST split, digits vs words); economic fingerprint; **three vendor lanes** (KNOWN, CHANGED_ACCOUNT, NEW_VENDOR); legitimate-twin clean controls with three metrics (traps blocked, clean auto-paid rate, clean falsely held) | C, D, E, K |
+| **P1** | Bank verification with our own name match; changed-account quarantine with **old-number vendor call-back**; heuristic duplicates → ASK; hard invariant failures → BLOCK | E, E2, F |
+| **P2** | Payout state machine with **UNKNOWN**; deterministic `transfer_id`; status check before any retry; ledger (one active transfer per invoice, cumulative paid ≤ invoice amount); reconciliation sweep; reversal never auto-repays | I, I2 |
+| **P3** | Cash/deadline ordering; bundle-hash approval (spoken total + bill count, **PIN tap authorises**, invalidates on any change); second approver above a threshold | G, H |
+| **Cut first** | Hash-chain audit (keep a plain append-only log), regret table, alias learning, anomaly signals | J, G, M |
+
+**Sarvam boundary (from Sarvam's own guidance plus the team rule):** extract structured fields, never translate before matching; canonicalise in code; transliterate vendor names only (never translate them); keep the native-script reading as the evidence of record; explanations come from templates (we do **not** use a Sarvam chat model to write them, even though Sarvam suggests it, because of the team rule).
+
 ## 1. Shape of the system
 
 ```
@@ -42,6 +54,7 @@ flowchart TD
   D --> F
   E --> F
   E -- "ACCOUNT_CHANGED" --> E2["E2. Call-back on vendor-master number<br/>Bulbul asks, Saaras hears last 4"]
+  E -- "NEW_VENDOR" --> ASK
   E2 -- "match + owner approves change" --> F
   E2 -- "mismatch" --> BLK
   F -- "BLOCK" --> BLK["BLOCK + reason<br/>template in owner's language"]
@@ -124,6 +137,7 @@ sequenceDiagram
   O->>S: "haan, 22,000, do bill, 4-7-2"
   S->>P: transcript
   P->>P: check yes + total + count + code + TTL + single use
+  O->>P: PIN tap on screen, bound to bundle_hash (the authority)
   alt all match
     P->>P: approval valid, execute payouts
   else anything differs or bundle changed
@@ -144,6 +158,12 @@ sequenceDiagram
 ## 2. Modules
 
 ### A. Intake and reading (Sarvam Vision)
+- **One queue.** Every invoice (scan, photo, PDF, forward) lands in one batch queue keyed by file hash, so the same invoice arriving twice is caught in one place.
+- **Extract, don't translate** (per Sarvam's guidance; confirm on the day): use Document AI **Extract** with a fixed schema: `invoice_no, invoice_date, vendor_name, vendor_gstin, buyer_gstin, po_no, line_items[{item, qty, rate, discount, amount}], subtotal, cgst, sgst, igst, tax_total, total, amount_in_words, bank_account, ifsc, upi_id, vendor_phone`. Reported limits: Extract 20 pages and 200 MB per PDF; Parse 30 pages; some pages mention a 10-page per-job cap, so split into small jobs and keep the page number on every field.
+- Run **Parse** with `output_format="json"` for the audit view: it reportedly returns a bounding box per block, so the owner screen can highlight the exact field on the scan.
+- Language: Vision 2.1 reportedly covers 22 Indian languages + English, so Tamil, Hindi and English invoices go through the same call. Record the detected language per invoice.
+- Store **both `raw_native` and `canonical`** for every field. The native string is the evidence; matching uses only the canonical value.
+- Use per-field confidence if Extract returns it (UNVERIFIED); otherwise fall back to multi-read agreement (below). Low confidence on account, IFSC or any amount → never auto-pay.
 - SDK: `sarvamai` 0.1.48, `client.document_intelligence.create_job(...)` → `job.upload_file(path)` → `job.start()` → `job.wait_until_complete()` → `job.download_output(path)` (names read from the installed SDK; output format and field schema UNVERIFIED, test early).
 - Latency is 20-90 s per job and handwriting accuracy is unverified. **Never block the live demo on Vision**: pre-run the demo batch and cache the output; start new files in the background the moment they arrive.
 - **Multi-read:** read each document from the original and two preprocessed variants (binarised, upscaled). A field is `stable` only if the reads agree after normalisation. Unstable fields set `LOW_CONFIDENCE_READ` and route to ASK. Never pick a "best guess" silently.
@@ -155,7 +175,9 @@ sequenceDiagram
 - Amount in words: English, Hindi and Tamil number words to `Decimal` (Tamil and Hindi word lists need native-speaker review).
 - Dates: `dd-mm-yyyy`, `dd/mm/yy`, `d Mon yyyy`, `yyyy-mm-dd`, `3rd November 2026`, Tamil and Hindi month names. Default day-first (India). If day and month are both ≤ 12 and the format is unknown, mark the date `ambiguous`.
 - Vendor names: lowercase, strip honorifics and legal suffixes (sri, shri, m/s, traders, & co, pvt ltd), transliterate to Latin, then a phonetic key. Keep the original string too.
-- Invoice numbers: strip prefixes, separators, leading zeros and case.
+- Invoice numbers: strip prefixes, separators, leading zeros and case, **but keep the financial-year part** ("42/2025-26" and "42/2026-27" are different invoices; vendors often restart numbering each year).
+- **Never translate** GSTIN, invoice number, account number, IFSC, amounts or dates; copy them byte for byte and canonicalise in code. Translation is lossy and non-deterministic.
+- Vendor names: **transliterate, don't translate** (Sarvam's transliteration with Roman output, or a local library), then compare with trigram/Jaro-Winkler plus a phonetic key so "Venkateshwara" and "Venkateswara" collapse. Cache every transliteration by content hash so reruns are deterministic. Whether Sarvam transliteration fits the team rule is an open question (SYSTEM.md section 7).
 
 ### C. Invariants (pure functions)
 True-by-construction checks. A failure here is a **BLOCK**.
@@ -164,7 +186,8 @@ True-by-construction checks. A failure here is a **BLOCK**.
 | `ARITH_LINE` | each line: quantity x rate = amount (tolerance 1 paisa per line) |
 | `ARITH_SUBTOTAL` | sum of lines = subtotal |
 | `ARITH_TOTAL` | subtotal + tax = total |
-| `ARITH_WORDS` | amount in words = total in figures |
+| `ARITH_WORDS` | amount in words = total in figures (in Indian practice words usually prevail; a mismatch is a classic doctoring sign) |
+| `ARITH_GST_SPLIT` | taxable = qty x rate - discount; same state code in vendor and buyer GSTIN → CGST = SGST = half the rate and no IGST; different states → IGST only (BLOCK only if both GSTINs read stable; otherwise ASK) |
 | `BANK_INVALID` | bank verification says `account_status` INVALID |
 | `NAME_MISMATCH` | bank-registered name vs claimed payee fails our match (section E) |
 | `ACCOUNT_SHARED` | the same account appears under two different vendors in the vendor master |
@@ -182,11 +205,26 @@ Soft checks (flag and ASK, never BLOCK on their own): GSTIN checksum/format (Cas
 | Same vendor, identical content, date in a **new period** (≥ 25 days later) and vendor flagged `recurring` | PAY | (none) |
 | Similar vendor name but different GSTIN | not a duplicate | (none) |
 
-Fuzzy matches go to ASK, not BLOCK, so the false-block rate survives the unseen batch. Thresholds live in config and are set from the evaluation sweep (section K).
+Fuzzy matches go to ASK, not BLOCK, so the false-block rate survives the unseen batch.
+
+**Two tracks, not one score** (from Sarvam's guidance):
+- **Hard keys** (exact after normalisation, never translated): vendor GSTIN, account + IFSC, PO number. These establish *same vendor* or *same order*.
+- **Soft keys** (fuzzy): transliterated vendor name, amount, date window, line-item fingerprint.
+- Call something a duplicate only with **one hard key plus the economic match**, or **two independent soft signals**; always emit the score plus the evidence fields.
+- Cheap extra layer: same vendor + same normalised invoice number (financial year kept) already paid → BLOCK `DUP_NUMBER`. This catches lazy resubmissions; it is not the main duplicate defence.
+- Changed bank details is a **separate check** (section E), never merged away by duplicate matching. Thresholds live in config and are set from the evaluation sweep (section K).
 
 Defence in depth: the payout `transfer_id` is derived from the fingerprint (section I), so a missed exact duplicate collides at Cashfree (`REJECTED` / `DUPLICATE_TRANSFER`, verified in docs). An amount-altered duplicate gets a new ID, so this backstop does not replace section D.
 
 ### E. Vendor and bank verification
+- **Three vendor lanes** (decided before any payment):
+
+| Lane | When | Path |
+|---|---|---|
+| `KNOWN` | GSTIN/identity matches the vendor master and the account is a known, verified account | normal checks; can enter a bundle without a question |
+| `CHANGED_ACCOUNT` | known vendor, account or IFSC differs in any way | freeze all payments to this vendor, bank verification on the new account, old-number call-back (E2), owner approves the change, then the master is updated (old values kept) |
+| `NEW_VENDOR` | no vendor-master match | ASK `NEW_VENDOR`: GSTIN + Udyam + bank verification, owner onboards the vendor; never auto-paid on first sight |
+
 - **Vendor master** (our memory, "every loop adds mass"): vendor ID, legal name, GSTIN, Udyam number and class, MSME rule flag, written-agreement days, recurring flag, phone on file, known accounts with provenance (onboarding / invoice / call-back) and first-seen date, payment history, call-back history.
 - **GSTIN**: `POST /verification/gstin` → `legal_name_of_business`, `gst_in_status`. **Udyam**: `POST /verification/udyam` → `enterprise_type` (micro/small/medium). Sandbox test data exists for both; anything else returns nothing.
 - **Bank account**: `POST /verification/bank-account/sync` with `bank_account`, `ifsc` and `name` → `account_status`, `name_at_bank`, `name_match_score`, `name_match_result`. In sandbox the score depends on the name we send to one of three test accounts (see [DEPENDENCIES.md](DEPENDENCIES.md)). **We compute our own name match** (token-sorted, transliteration-aware, initials-aware) against `name_at_bank` and use Cashfree's tier only as evidence. Thresholds: ≥ 85 pass; 60-84 ASK; < 60 `NAME_MISMATCH` BLOCK (tunable).
@@ -210,7 +248,7 @@ The voice step that catches a trap instead of only confirming one.
 Evaluation order (first match wins for BLOCK; ASKs accumulate):
 1. Any invariant failure (section C) → **BLOCK**.
 2. `DUP_EXACT` → **BLOCK**. `CALLBACK_MISMATCH` → **BLOCK**.
-3. `DUP_FUZZY`, `ACCOUNT_CHANGED` (before call-back), `LOW_CONFIDENCE_READ`, `VENDOR_UNVERIFIABLE`, new vendor, amount over the per-invoice limit, soft-check flags → **ASK**.
+3. `DUP_FUZZY`, `ACCOUNT_CHANGED` (before call-back), `LOW_CONFIDENCE_READ`, `VENDOR_UNVERIFIABLE`, `NEW_VENDOR`, amount over the per-invoice limit, soft-check flags → **ASK**.
 4. Otherwise **PAY-ready**; the planner may turn it into **DEFER** (`CASH_DEFERRED`).
 
 Every decision stores: outcome, reason codes, evidence (values compared, crops), message key per language.
@@ -232,6 +270,8 @@ Every decision stores: outcome, reason codes, evidence (values compared, crops),
 - Fails on: replay (old nonce), wrong plan (hash mismatch), expired TTL, ambiguous speech ("haan... nahi"), "haan" without the code or total.
 - Changed-account items need their own approval of the account change (E2) before they can enter a bundle.
 - Typed fallback: the same code typed into the UI. Honest limit: no speaker verification; a voice clone remains a risk.
+- **Voice never authorises alone.** Voice carries the conversation in the owner's language; the authority is a **PIN tap on screen** bound to the same `bundle_hash` (single use, short expiry). This answers "approval cannot be spoofed" without relying on voice.
+- **Second approver** above an owner-set amount, or when any item came through the `CHANGED_ACCOUNT` lane: a second person approves the same `bundle_hash` with their own PIN.
 
 ### I. Payout execution and state machine
 - Calls (REST via httpx; the `cashfree_pg` SDK covers PG only, not Payouts or Verification): `POST /payout/beneficiary` (only `VERIFIED` beneficiaries can be paid), `POST /payout/transfers`, `GET /payout/transfers?transfer_id=`. Headers `x-client-id`, `x-client-secret`, `x-api-version: 2024-01-01`. Sandbox host conflict: `sandbox.cashfree.com/payout` (most v2 pages) vs `payout-gamma.cashfree.com` (v1 and some v2 pages); use whichever our credentials work against.
@@ -253,6 +293,9 @@ SUCCESS ──TRANSFER_REVERSED──> REVERSED ──> bill reopened (re-verify
 | Success is final only when | status SUCCESS and `status_code` COMPLETED (`SENT_TO_BENEFICIARY` is not final) |
 | Reversal | `REVERSED` reopens the bill as unpaid; it goes back through E (re-verify) and needs a fresh bundle approval; never auto-repay |
 | Duplicate response | `REJECTED` + `DUPLICATE_TRANSFER` means "already sent"; fetch status of the original, do not create a new attempt |
+| Ledger invariant | at most **one active transfer per invoice**; confirmed + in-flight amounts never exceed the invoice amount; Cashfree's duplicate rejection is the backstop, not the control |
+| Reconciliation sweep | every 60 s, poll status for transfers in SENT, UNKNOWN or PENDING, so a lost webhook never leaves an invoice in limbo (push and pull, two paths to the truth) |
+| API 200 | means *submitted*, never *paid*; an invoice is paid only at SUCCESS + COMPLETED |
 
 ### I2. Webhook receiver
 - `POST /webhooks/cashfree/payouts`. Verify `x-webhook-signature` = base64(HMAC-SHA256(client_secret, `x-webhook-timestamp` + raw body)) on the **raw** body. This matches `Cashfree.PGVerifyWebhookSignature` in the installed `cashfree_pg` SDK (no separator). Docs conflict for some products, so test against a real delivery.
@@ -264,13 +307,16 @@ SUCCESS ──TRANSFER_REVERSED──> REVERSED ──> bill reopened (re-verify
 Append-only table; each entry = (ID, time, actor, action, payload, `prev_hash`, `hash`). Entries for: invoice ingested (image hash), field reads, each check, decision, call-back, bundle created, approval, payout attempt, webhook event, status poll. The auditor view walks from a payout back to the invoice crop.
 
 ### K. Evaluation harness (scoreboard)
-See [UNIT_TESTS.md](UNIT_TESTS.md) section 3. Two headline numbers: **traps caught (BLOCK)** and **clean auto-paid rate**. ASK on a clean invoice counts as a **false hold**. Claim only "zero false blocks on our clean controls, measured", never on the unseen batch.
+See [UNIT_TESTS.md](UNIT_TESTS.md) section 3. Three headline numbers, reported separately: **traps blocked**, **clean auto-paid rate**, **clean falsely held** (ASK on a clean invoice). False blocks on clean invoices are reported too. Claim only "zero false blocks on our clean controls, measured", never on the unseen batch.
 
 ### L. Voice layer
 - STT: `client.speech_to_text.transcribe(file=..., model="saaras:v4", mode="codemix", language_code=..., keyterms=[vendor names])`. The installed SDK docstring says `mode` is "only applicable when using saaras:v3" while also listing all modes for v4: test both.
 - TTS: `client.text_to_speech.convert(text=..., language_code=..., model="bulbul:v4-flash", speaker=...)`, returns base64 audio. v4-flash default speaker `shubh_enhi_ads`; persona IDs are `<name>_<language>_<style>`. Max 2,500 characters. **Write numbers above four digits with commas** (e.g. "22,000") for correct pronunciation.
 - Languages for the demo: Tamil (owner), Hindi/Hinglish, English. Check the Bulbul v4-flash language list (11 languages per the docs: hi, en, bn, gu, kn, mr, pa, ta, te, ml, od).
 - All text from templates: `templates/<lang>/<message_key>.txt` with variables. Native-speaker review before the demo.
+- Explain from the native extraction; never round-trip (native → English → Tamil). Show account numbers as last four only.
+- Bulbul reads back vendor, amount and last four digits; Saaras transcribes the owner's reply (for example "ஆமா, பண்ணிடு" or "haan, kar do") with vendor names as `keyterms`.
+- If Sarvam translation is ever used (for outbound vendor notes only), note the reported input caps (`mayura:v1` 1,000 characters, `sarvam-translate:v1` 2,000) and cache by content hash.
 
 ### M. UI (web)
 Owner view (batch table with outcome chips and reasons in his language; plan and approval; live payout status via server-sent events), audit view, scoreboard view, side-by-side crop vs extracted value for ASK items.
@@ -325,6 +371,9 @@ Never store full account numbers in logs; keep them encrypted or only in the ben
 | `ARITH_LINE`, `ARITH_SUBTOTAL`, `ARITH_TOTAL`, `ARITH_WORDS` | BLOCK | numbers disagree |
 | `DUP_EXACT` | BLOCK | same economic content already paid or pending |
 | `DUP_FUZZY` | ASK | looks like a repeat but not identical |
+| `DUP_NUMBER` | BLOCK | same vendor + same normalised invoice number (financial year kept) already paid |
+| `ARITH_GST_SPLIT` | BLOCK (ASK if GSTINs unstable) | CGST/SGST vs IGST does not fit the state codes |
+| `NEW_VENDOR` | ASK | no vendor-master match; onboard first |
 | `BANK_INVALID` | BLOCK | account invalid at bank |
 | `NAME_MISMATCH` | BLOCK | bank-registered name does not match the vendor |
 | `ACCOUNT_SHARED` | BLOCK | one account under two vendors |
@@ -407,6 +456,15 @@ class Invoice:
     account_number: Optional[str]              # in memory only; never logged
     ifsc: Optional[str]
     stable: dict[str, bool] = field(default_factory=dict)  # per-field multi-read agreement
+    confidence: dict[str, float] = field(default_factory=dict)  # per-field, if Extract returns it
+    raw_native: dict[str, str] = field(default_factory=dict)    # evidence of record, native script
+    pages: dict[str, int] = field(default_factory=dict)          # page number per field
+    language: Optional[str] = None
+    po_number: Optional[str] = None
+    buyer_gstin: Optional[str] = None
+    discount: Optional[Decimal] = None
+    cgst: Optional[Decimal] = None; sgst: Optional[Decimal] = None; igst: Optional[Decimal] = None
+    vendor_phone_on_invoice: Optional[str] = None  # recorded, never used for call-backs
 
 @dataclass
 class Decision:

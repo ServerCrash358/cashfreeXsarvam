@@ -57,6 +57,13 @@ client = SarvamAI(api_subscription_key=os.environ["SARVAM_API_KEY"])  # construc
 
 Bulbul v4-flash languages (docs): hi, en, bn, gu, kn, mr, pa, ta, te, ml, od.
 
+### Document AI Extract / Parse (from Sarvam's own guidance; confirm on the day)
+- **Extract** with a fixed field schema (see ARCHITECTURE section A): reported cap 20 pages and 200 MB per PDF.
+- **Parse** with `output_format="json"`: reported bounding box per block (for highlighting on the scan); reported cap 30 pages; some pages mention a 10-page per-job cap.
+- Vision 2.1: reportedly 22 Indian languages + English.
+- The installed SDK exposes `client.doc_ai` and `client.document_intelligence`; which one maps to Extract vs Parse is to be confirmed (`IT-SARVAM` S15-S17).
+- Transliteration (vendor names only, if allowed): Mayura with `output_script: "roman"`, `source_language_code: "auto"`. Translation input caps (reported): `mayura:v1` 1,000 characters, `sarvam-translate:v1` 2,000.
+
 ## 4. Cashfree
 
 Auth headers for REST: `x-client-id`, `x-client-secret`, `x-api-version`. PG SDK default `XApiVersion` is `2026-01-01` (VERIFIED in the installed SDK); Payouts examples use `2024-01-01`.
