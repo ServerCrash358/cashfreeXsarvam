@@ -69,6 +69,11 @@ def _name_check(label: str, a: Optional[str], b: Optional[str], cfg: dict) -> Ch
     return CheckResult("NAME_MISMATCH", False, "block", ev, "name_mismatch")
 
 
+#: Cashfree account_status_code values that hard-BLOCK even when the
+#: coarse status is not INVALID. A fraud flag must never degrade to ASK.
+FRAUD_BLOCK_CODES = frozenset({"FRAUD_ACCOUNT"})
+
+
 def verify_vendor(inv: Invoice, vendor: Optional[Vendor], vendors: list[Vendor], client,
                   cfg: dict, callback_result: Optional[CheckResult] = None) -> tuple[str, list[CheckResult]]:
     """Returns (lane, checks). Bank verification runs for CHANGED_ACCOUNT and NEW_VENDOR."""
@@ -104,10 +109,12 @@ def verify_vendor(inv: Invoice, vendor: Optional[Vendor], vendors: list[Vendor],
     bank = client.bank(inv.account_number or "", inv.ifsc or "", claimed) if inv.account_number else \
         {"account_status": "UNVERIFIABLE"}
     status = bank.get("account_status")
-    ev = {"account_last4": inv.account_last4, "account_status": status, "name_at_bank": bank.get("name_at_bank"),
+    status_code = bank.get("account_status_code")
+    ev = {"account_last4": inv.account_last4, "account_status": status, "account_status_code": status_code,
+          "name_at_bank": bank.get("name_at_bank"),
           "cashfree_name_match": bank.get("name_match_result"), "cashfree_score": bank.get("name_match_score"),
           "canned": bank.get("canned"), "live_error": bank.get("live_error")}
-    if status == "INVALID":
+    if status == "INVALID" or status_code in FRAUD_BLOCK_CODES:
         out.append(CheckResult("BANK_INVALID", False, "block", ev, "bank_invalid"))
     elif status != "VALID":
         out.append(CheckResult("VENDOR_UNVERIFIABLE", False, "ask", ev, "vendor_unverifiable"))
