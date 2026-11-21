@@ -44,7 +44,7 @@ Layout: `tests/integration/test_<suite>.py`, marked `@pytest.mark.integration`, 
 | ID | Step | Expected | Status |
 |---|---|---|---|
 | P1 | find working host: `sandbox.cashfree.com/payout` vs `payout-gamma.cashfree.com` | one authenticates; record which | **RAN 21 Nov**: both authenticate after IP whitelisting. v2 `sandbox.cashfree.com/payout` GET transfers/beneficiary → 404 not_found (auth OK). v1 gamma `/authorize` → token; `getBalance` → "No data found" (funding still UNVERIFIED). Payouts and Secure ID share one key pair. |
-| P2 | create beneficiary on 000100289877623 / SBIN0008752 | VERIFIED (docs conflict on this account: record) | |
+| P2 | create beneficiary on 000100289877623 / SBIN0008752 | VERIFIED (docs conflict on this account: record) | **RAN 21 Nov** via the app: beneficiary created, `POST /transfers` accepted (cf_transfer_id 667850829, RECEIVED), then status REJECTED `ERROR_SELECTING_FUND_SOURCE`: the sandbox account has **no funded fund source**. Fund it under Payouts → Fund Sources, then retry with a new plan + approval (attempt 2, new transfer_id). |
 | P3 | transfer Rs 1 | SUCCESS or INSUFFICIENT_BALANCE; record how balance was funded | |
 | P4 | same `transfer_id` again | 200, REJECTED, DUPLICATE_TRANSFER | |
 | P5 | invalid IFSC 2640101002729 / CNRR0002640 | rejected / failed | |

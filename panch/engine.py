@@ -180,7 +180,8 @@ class Engine:
             cash = Decimal(str(cash if cash is not None else self.cfg["cash_limit"]))
             items = []
             for k, st in self.state.items():
-                if st["decision"].outcome in (Outcome.PAY, Outcome.DEFER) and st["payment"] in ("unpaid", "reversed"):
+                # a terminal FAILED/REJECTED attempt may be retried, but only via a new plan + fresh approval
+                if st["decision"].outcome in (Outcome.PAY, Outcome.DEFER) and st["payment"] in ("unpaid", "failed"):
                     items.append(PlanItem(k, st["vendor_id"], self.invoices[k].total, st["deadline"]))
             p = plan(items, cash, self.today, int(self.cfg.get("next_run_days", 7)))
             chosen = {i.invoice_id for i in p.chosen}
