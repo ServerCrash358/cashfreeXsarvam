@@ -1,0 +1,218 @@
+{
+  "inv_01_en.png": {
+    "language": "en",
+    "expect": "clean",
+    "style": "print",
+    "vendor_name": "Coastal Steel Pvt Ltd",
+    "vendor_name_latin": "Coastal Steel Pvt Ltd",
+    "vendor_gstin": "29AAICP2912R1ZR",
+    "buyer_gstin": "33AAFCR1234M1Z2",
+    "invoice_no": "CSPL/INV/1187",
+    "invoice_date": "14 Nov 2026",
+    "po_no": "PO-RH-0412",
+    "line_items": [
+      {
+        "item": "MS Angle 40x40",
+        "qty": "40",
+        "rate": "150.00",
+        "amount": "6000.00"
+      },
+      {
+        "item": "Binding wire (kg)",
+        "qty": "10",
+        "rate": "200.00",
+        "amount": "2000.00"
+      }
+    ],
+    "subtotal": "8000.00",
+    "cgst": null,
+    "sgst": null,
+    "igst": "1440.00",
+    "total": "9440.00",
+    "amount_in_words": "Nine Thousand Four Hundred Forty Rupees Only",
+    "bank_account": "388108022658",
+    "ifsc": "ICIC0000009",
+    "payee_name": "Coastal Steel Pvt Ltd",
+    "vendor_phone": "+91 98450 11223"
+  },
+  "inv_02_hi.png": {
+    "language": "hi",
+    "expect": "clean",
+    "style": "print",
+    "vendor_name": "श्री गणेश पैकेजिंग",
+    "vendor_name_latin": "Shree Ganesh Packaging",
+    "vendor_gstin": "27AAPFS1234K1Z5",
+    "buyer_gstin": "33AAFCR1234M1Z2",
+    "invoice_no": "SGP/0093/2026-27",
+    "invoice_date": "12-11-2026",
+    "po_no": null,
+    "line_items": [
+      {
+        "item": "कार्टन बॉक्स",
+        "qty": "300",
+        "rate": "40.00",
+        "amount": "12000.00"
+      },
+      {
+        "item": "पैकिंग टेप",
+        "qty": "100",
+        "rate": "35.00",
+        "amount": "3500.00"
+      }
+    ],
+    "subtotal": "15500.00",
+    "cgst": null,
+    "sgst": null,
+    "igst": "2790.00",
+    "total": "18290.00",
+    "amount_in_words": "अठारह हज़ार दो सौ नब्बे रुपये मात्र",
+    "bank_account": "026291800001191",
+    "ifsc": "YESB0000262",
+    "payee_name": "Shree Ganesh Packaging",
+    "vendor_phone": "+91 99200 44556"
+  },
+  "inv_05_en_hand.png": {
+    "language": "en",
+    "expect": "clean",
+    "style": "hand",
+    "vendor_name": "Annapoorna Supplies",
+    "vendor_name_latin": "Annapoorna Supplies",
+    "vendor_gstin": "33AAKFA4321Q1Z9",
+    "buyer_gstin": "33AAFCR1234M1Z2",
+    "invoice_no": "AS/1044/2026-27",
+    "invoice_date": "15/11/2026",
+    "po_no": null,
+    "line_items": [
+      {
+        "item": "Rice bag 25kg",
+        "qty": "10",
+        "rate": "1200",
+        "amount": "12000"
+      },
+      {
+        "item": "Oil tin 15L",
+        "qty": "5",
+        "rate": "600",
+        "amount": "3000"
+      }
+    ],
+    "subtotal": "15000",
+    "cgst": null,
+    "sgst": null,
+    "igst": null,
+    "total": "15000",
+    "amount_in_words": "Fifteen thousand only",
+    "bank_account": "00011020001772",
+    "ifsc": "HDFC0000001",
+    "payee_name": "Annapoorna Supplies",
+    "vendor_phone": "+91 90030 12121"
+  },
+  "inv_06_hi_trap.png": {
+    "language": "hi",
+    "expect": "trap: ARITH_TOTAL + ARITH_WORDS",
+    "style": "print",
+    "vendor_name": "बालाजी पेंट्स",
+    "vendor_name_latin": "Balaji Paints",
+    "vendor_gstin": "27AAJFB5678L1Z3",
+    "buyer_gstin": "33AAFCR1234M1Z2",
+    "invoice_no": "BP/0518/2026-27",
+    "invoice_date": "13 Nov 2026",
+    "po_no": null,
+    "line_items": [
+      {
+        "item": "इमल्शन पेंट 20L",
+        "qty": "20",
+        "rate": "450.00",
+        "amount": "9000.00"
+      },
+      {
+        "item": "प्राइमर 10L",
+        "qty": "10",
+        "rate": "500.00",
+        "amount": "5000.00"
+      }
+    ],
+    "subtotal": "14000.00",
+    "cgst": null,
+    "sgst": null,
+    "igst": "2520.00",
+    "total": "18520.00",
+    "amount_in_words": "सत्रह हज़ार पाँच सौ बीस रुपये मात्र",
+    "bank_account": "00011020001772",
+    "ifsc": "HDFC0000001",
+    "payee_name": "Balaji Paints",
+    "vendor_phone": "+91 98220 33445"
+  },
+  "inv_04_hi_scan.png": {
+    "language": "hi",
+    "expect": "clean",
+    "style": "photo/scan of inv_02_hi.png",
+    "vendor_name": "श्री गणेश पैकेजिंग",
+    "vendor_name_latin": "Shree Ganesh Packaging",
+    "vendor_gstin": "27AAPFS1234K1Z5",
+    "buyer_gstin": "33AAFCR1234M1Z2",
+    "invoice_no": "SGP/0093/2026-27",
+    "invoice_date": "12-11-2026",
+    "po_no": null,
+    "line_items": [
+      {
+        "item": "कार्टन बॉक्स",
+        "qty": "300",
+        "rate": "40.00",
+        "amount": "12000.00"
+      },
+      {
+        "item": "पैकिंग टेप",
+        "qty": "100",
+        "rate": "35.00",
+        "amount": "3500.00"
+      }
+    ],
+    "subtotal": "15500.00",
+    "cgst": null,
+    "sgst": null,
+    "igst": "2790.00",
+    "total": "18290.00",
+    "amount_in_words": "अठारह हज़ार दो सौ नब्बे रुपये मात्र",
+    "bank_account": "026291800001191",
+    "ifsc": "YESB0000262",
+    "payee_name": "Shree Ganesh Packaging",
+    "vendor_phone": "+91 99200 44556"
+  },
+  "inv_08_hi_photo.png": {
+    "language": "hi",
+    "expect": "trap: ARITH_TOTAL + ARITH_WORDS",
+    "style": "photo/scan of inv_06_hi_trap.png",
+    "vendor_name": "बालाजी पेंट्स",
+    "vendor_name_latin": "Balaji Paints",
+    "vendor_gstin": "27AAJFB5678L1Z3",
+    "buyer_gstin": "33AAFCR1234M1Z2",
+    "invoice_no": "BP/0518/2026-27",
+    "invoice_date": "13 Nov 2026",
+    "po_no": null,
+    "line_items": [
+      {
+        "item": "इमल्शन पेंट 20L",
+        "qty": "20",
+        "rate": "450.00",
+        "amount": "9000.00"
+      },
+      {
+        "item": "प्राइमर 10L",
+        "qty": "10",
+        "rate": "500.00",
+        "amount": "5000.00"
+      }
+    ],
+    "subtotal": "14000.00",
+    "cgst": null,
+    "sgst": null,
+    "igst": "2520.00",
+    "total": "18520.00",
+    "amount_in_words": "सत्रह हज़ार पाँच सौ बीस रुपये मात्र",
+    "bank_account": "00011020001772",
+    "ifsc": "HDFC0000001",
+    "payee_name": "Balaji Paints",
+    "vendor_phone": "+91 98220 33445"
+  }
+}
