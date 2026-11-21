@@ -1,0 +1,1 @@
+The bank says this account belongs to '{a}', not '{b}' (score {our_score}). Blocked.

@@ -9,7 +9,7 @@ Layout: `tests/integration/test_<suite>.py`, marked `@pytest.mark.integration`, 
 ## IT-CF-VRS: Cashfree bank account verification (`/verification/bank-account/sync`)
 | ID | Request | Expected | Status |
 |---|---|---|---|
-| V1 | 026291800001191 + YESB0000262, name "john doe" | VALID, `name_at_bank` JOHN DOE, 100 DIRECT_MATCH | |
+| V1 | 026291800001191 + YESB0000262, name "john doe" | VALID, `name_at_bank` JOHN DOE, 100 DIRECT_MATCH | **RAN 21 Nov**: HTTP 200, VALID, `name_at_bank` JOHN DOE, but `name_match_score`/`result` **null** (name match not active on our account; we rely on our own `name_score`). Needed IP whitelisting first (2FA enforced in test mode). |
 | V2 | same, name "john d" | 85 GOOD_PARTIAL_MATCH | |
 | V3 | same, name "j doe" | 70 MODERATE_PARTIAL_MATCH | |
 | V4 | same, name "jane d" | 38 POOR_PARTIAL_MATCH | |
@@ -43,8 +43,8 @@ Layout: `tests/integration/test_<suite>.py`, marked `@pytest.mark.integration`, 
 ## IT-CF-PAYOUT: Payouts v2 (the gate)
 | ID | Step | Expected | Status |
 |---|---|---|---|
-| P1 | find working host: `sandbox.cashfree.com/payout` vs `payout-gamma.cashfree.com` | one authenticates; record which | |
-| P2 | create beneficiary on 000100289877623 / SBIN0008752 | VERIFIED (docs conflict on this account: record) | |
+| P1 | find working host: `sandbox.cashfree.com/payout` vs `payout-gamma.cashfree.com` | one authenticates; record which | **RAN 21 Nov**: both authenticate after IP whitelisting. v2 `sandbox.cashfree.com/payout` GET transfers/beneficiary → 404 not_found (auth OK). v1 gamma `/authorize` → token; `getBalance` → "No data found" (funding still UNVERIFIED). Payouts and Secure ID share one key pair. |
+| P2 | create beneficiary on 000100289877623 / SBIN0008752 | VERIFIED (docs conflict on this account: record) | **RAN 21 Nov** via the app: beneficiary created, `POST /transfers` accepted (cf_transfer_id 667850829, RECEIVED), then status REJECTED `ERROR_SELECTING_FUND_SOURCE`: the sandbox account has **no funded fund source**. Fund it under Payouts → Fund Sources, then retry with a new plan + approval (attempt 2, new transfer_id). |
 | P3 | transfer Rs 1 | SUCCESS or INSUFFICIENT_BALANCE; record how balance was funded | |
 | P4 | same `transfer_id` again | 200, REJECTED, DUPLICATE_TRANSFER | |
 | P5 | invalid IFSC 2640101002729 / CNRR0002640 | rejected / failed | |
@@ -105,13 +105,13 @@ Facts from the briefing: triggers (schedule, event, inbound webhook), steps (log
 | ID | Call | Expected | Status |
 |---|---|---|---|
 | S1 | `SarvamAI(api_subscription_key=...)` with our key | client created; a trivial call succeeds (confirm arg name) | |
-| S2 | `speech_to_text.transcribe` with `saaras:v4`, `mode="codemix"`, Hinglish approval clip | transcript contains "22,000" (or words) and the code digits | |
+| S2 | `speech_to_text.transcribe` with `saaras:v4`, `mode="codemix"`, Hinglish approval clip | transcript contains "22,000" (or words) and the code digits | **RAN 21 Nov** (Bulbul audio round trip, en/hi/ta): "seven seven two three" → "7723" in all three; digits come back as numerals. |
 | S3 | same with `saaras:v3`, `mode="codemix"` | compare; settles the "mode only for v3" docstring conflict | |
 | S4 | `document_intelligence` job on one printed and one handwritten invoice | job completes; record latency and output schema; check bounding boxes | |
 | S5 | Tamil clip of spoken digits "4-7-2-9" | digits recovered | |
 | S6 | 8 kHz telephony audio (call-back) | transcript usable | |
 | S7 | `keyterms=[vendor names]` | vendor names spelled correctly | |
-| S8 | `text_to_speech.convert` `bulbul:v4-flash`, `ta-IN`, `hi-IN`, `en-IN`, text with "22,000" | base64 decodes to playable audio; numbers spoken correctly; record latency | |
+| S8 | `text_to_speech.convert` `bulbul:v4-flash`, `ta-IN`, `hi-IN`, `en-IN`, text with "22,000" | base64 decodes to playable audio; numbers spoken correctly; record latency | **RAN 21 Nov**: 200 for ta/hi/en via the app's `/api/tts` (speakers vijay_ta_narration, ritu_hi_customer, shubh_enhi_ads). Pronunciation not yet reviewed by ear. |
 | S9 | invalid speaker persona | clear error | |
 | S10 | text over 2,500 characters | rejected; our templates stay short | |
 | S11 | invalid key | 401/403 handled; no key in logs | |

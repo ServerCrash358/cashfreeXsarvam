@@ -1,0 +1,1 @@
+लाइनों का जोड़ {sum_of_lines} है, पर सबटोटल {printed_subtotal} लिखा है।
