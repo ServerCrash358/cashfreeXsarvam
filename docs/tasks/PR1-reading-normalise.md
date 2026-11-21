@@ -12,6 +12,15 @@ Turn an invoice image/PDF into a populated `Invoice` (see `panch/models.py` inte
 - `panch/normalise/`: `parse_amount`, `words_to_amount` (en, hi, ta), `parse_date` (returns `(date, ambiguous)`), `vendor_key`, `norm_invoice_number`, Indic digit mapping.
 - `scripts/read_batch.py`: read a folder, write cached JSON per invoice.
 
+## v3 additions (priority: P0 enabler, ship first)
+- **One queue** keyed by file hash; split into small jobs to respect page caps (reported: Extract 20 pages, Parse 30, some pages say 10 per job); keep the page number on every field.
+- **Extract with the fixed schema** in ARCHITECTURE section A (incl. `buyer_gstin`, `po_no`, `cgst/sgst/igst`, `discount`, `vendor_phone`); **Parse** `output_format="json"` for bounding boxes.
+- Store `raw_native` and canonical value per field; record detected language.
+- Per-field confidence if returned, else multi-read; low confidence on account, IFSC or any amount must surface (never auto-pay).
+- **Never translate** GSTIN, invoice number, account, IFSC, amounts, dates. Invoice numbers keep the financial-year part.
+- Vendor names: transliterate (Sarvam Roman output if the team rule allows, else a local library), cache by content hash; phonetic key + trigram/Jaro-Winkler.
+- Extra tests: `U-NORM-15` to `U-NORM-17`; integration `IT-SARVAM` S15-S19.
+
 ## Tests to implement (offline)
 `U-NORM-1` to `U-NORM-14` from [docs/UNIT_TESTS.md](../UNIT_TESTS.md). Mock the Sarvam client for reading tests; add one recorded Vision output as a fixture in `tests/contract/`.
 
