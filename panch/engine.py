@@ -20,7 +20,7 @@ from panch.models import Bundle, BundleItem, CheckResult, Invoice, Outcome, Plan
 from panch.payouts import CF_TO_STATE, Attempt, Ledger, apply_event, transfer_id
 from panch.planner import msme_deadline, plan
 from panch.reading import invoice_from_extract
-from panch.vendors import account_hash, find_vendor, verify_vendor
+from panch.vendors import account_hash, find_vendor, frozen_by, verify_vendor
 from panch.vendors.callback import CallbackSession, finish_callback, start_callback
 from panch.voice import render
 
@@ -111,12 +111,22 @@ class Engine:
         self.events = self.events[-200:]
 
     # ------------------------------------------------------------- decisions
-    def evaluate(self, inv_id: str):
+    def evaluate(self, inv_id: str, cascade: bool = True):
         with _lock:
             inv = self.invoices[inv_id]
             lane, v, dec = assess(inv, self.vendors, self.history + self._pending_entries(inv_id), self.verifier,
                                   self.cfg, self.callback_results.get(inv_id))
             prev = self.state.get(inv_id, {})
+            # PR 3 (U-VEN-13): a pending account change freezes every other unpaid bill of that vendor
+            src = None if lane == "CHANGED_ACCOUNT" or not v else frozen_by(
+                v.id, inv_id, ((k, s["vendor_id"], s["lane"], s["decision"].outcome.value)
+                               for k, s in self.state.items()))
+            if src and prev.get("payment", "unpaid") == "unpaid" and dec.outcome == Outcome.PAY:
+                other = self.invoices[src]
+                dec = decide(inv, dec.checks + [CheckResult(
+                    "ACCOUNT_CHANGED", False, "ask",
+                    {"frozen_by_invoice": src, "invoice_account_last4": other.account_last4,
+                     "known_accounts": ", ".join("xx" + a.last4 for a in v.accounts)}, "account_changed")])
             self.state[inv_id] = {
                 "lane": lane, "vendor_id": v.id if v else None, "decision": dec,
                 "fingerprint": fingerprint(inv, v.id if v else None),
@@ -126,6 +136,11 @@ class Engine:
             self.audit.append("decision", {"outcome": dec.outcome.value, "codes": dec.codes, "lane": lane},
                               entity=inv_id)
             self.emit("decision", {"invoice": inv_id, "outcome": dec.outcome.value})
+            # a changed-account bill appearing or resolving moves the freeze: re-check the vendor's other bills
+            if cascade and v and "CHANGED_ACCOUNT" in (lane, prev.get("lane")):
+                for k, s in list(self.state.items()):
+                    if k != inv_id and s["vendor_id"] == v.id and s["payment"] == "unpaid":
+                        self.evaluate(k, cascade=False)
 
     def _pending_entries(self, inv_id: str) -> list[HistoryEntry]:
         """Other invoices in this batch already paid or in flight count as history."""
@@ -328,12 +343,22 @@ class Engine:
     def _apply_cf(self, att: Attempt, body: dict, source: str, http: Optional[int] = None):
         status = (body or {}).get("status") or (body or {}).get("transfer_status")
         if body.get("code") == "transfer_id_already_exists" or body.get("status_code") == "DUPLICATE_TRANSFER":
+            # "Already sent": the ORIGINAL transfer exists. Never mark this attempt FAILED (that would let a
+            # retry create a second payment): take the original's status, or hold at UNKNOWN and poll.
             att.history.append({"note": "duplicate transfer: fetching original status", "source": source})
             try:
                 _, body = self.payouts.get_status(att.transfer_id)
                 status = body.get("status")
             except Exception:
-                status = None
+                body, status = {}, None
+            state = CF_TO_STATE.get(status or "", None)
+            if state:
+                att.cf_transfer_id = body.get("cf_transfer_id") or att.cf_transfer_id
+                att.utr = body.get("transfer_utr") or att.utr
+                apply_event(att, state, body.get("status_code"), source=f"{source} (duplicate)")
+            else:
+                apply_event(att, "UNKNOWN", source=f"{source} (duplicate; status unavailable, will poll)")
+            return
         att.cf_transfer_id = body.get("cf_transfer_id") or att.cf_transfer_id
         att.utr = body.get("transfer_utr") or att.utr
         state = CF_TO_STATE.get(status or "", None)
@@ -342,7 +367,10 @@ class Engine:
         else:
             att.history.append({"note": f"unmapped response http={http}", "body_code": body.get("code"),
                                 "message": (body.get("message") or "")[:120], "source": source})
-            if http and 400 <= http < 500:
+            # PR 3: only a 4XX on the transfer POST itself means "not created" (terminal). A 4XX on a status
+            # poll (429, 404 while it registers) says nothing about the transfer: keep polling, never FAIL it,
+            # or a retry could become a second payment.
+            if http and 400 <= http < 500 and source == "api_response":
                 apply_event(att, "FAILED", body.get("code"), source=source)
 
     def _sync_invoice(self, att: Attempt):

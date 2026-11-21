@@ -86,7 +86,7 @@ def test_bank_cache_serves_repeat_verification():
     c = VerificationClient(live=False)
     first = c.bank("026291800001191", "YESB0000262", "john doe")
     second = c.bank("026291800001191", "YESB0000262", "john doe")
-    assert first is second
+    assert first == second and len(c._bank_cache) == 1   # served from cache (a copy, so callers cannot mutate it)
     assert first["account_status"] == "VALID"
 
 
@@ -103,7 +103,7 @@ def test_bank_cache_covers_unknown_accounts():
     c = VerificationClient(live=False)
     a = c.bank("000000000000", "XXXX0000000")
     b = c.bank("000000000000", "XXXX0000000")
-    assert a is b and a["account_status"] == "UNVERIFIABLE"
+    assert a == b and a["account_status"] == "UNVERIFIABLE" and len(c._bank_cache) == 1
 
 
 def test_live_fallback_is_not_cached(monkeypatch):

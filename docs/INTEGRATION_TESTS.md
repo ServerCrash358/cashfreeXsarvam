@@ -118,7 +118,7 @@ Facts from the briefing: triggers (schedule, event, inbound webhook), steps (log
 | S12 | rate limit / 429 | backoff works | |
 | S13 | streaming STT/TTS (optional, live call) | works over the hotspot | |
 | S14 | credits used after rehearsal | within the day's allocation | |
-| S15 | Document AI **Extract** with our field schema on a printed Tamil, a printed Hindi and a handwritten English invoice | fields returned; record whether per-field confidence exists | |
+| S15 | Document AI **Extract** with our field schema on a printed Tamil, a printed Hindi and a handwritten English invoice | fields returned; record whether per-field confidence exists | **RAN 21 Nov**: 8 rendered demo invoices (ta/hi/en, 2 in a handwriting-style font) via `scripts/read_batch.py`: ~10 s each, all fields returned; GST parts read but no tax total when none is printed (gate now falls back to the GST sum). Handwriting-style G misread its GSTIN (extra digit) and flagged 4 fields unstable, so it is ASKed, never silently passed. All 8 reach the expected outcomes through the gate. |
 | S16 | **Parse** with `output_format="json"` | bounding boxes per block; map to fields for the audit view | |
 | S17 | page caps: a 12-page and a 25-page PDF | record the real per-job cap (10, 20 or 30) and the error returned | |
 | S18 | language detection on mixed Tamil/English invoice | detected language recorded | |

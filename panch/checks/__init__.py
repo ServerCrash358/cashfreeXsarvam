@@ -35,6 +35,13 @@ def _s(v) -> str:
     return None if v is None else str(v)
 
 
+def effective_tax(inv: Invoice) -> Decimal:
+    """Printed tax total; if the invoice prints only CGST/SGST/IGST lines, their sum."""
+    if inv.tax is not None:
+        return inv.tax
+    return sum((p for p in (inv.cgst, inv.sgst, inv.igst) if p is not None), Decimal("0"))
+
+
 def run_invariants(inv: Invoice, cfg: dict) -> list[CheckResult]:
     """Hard invariants (BLOCK on failure) and soft checks (ASK). Missing data -> ASK, never silent pass."""
     out: list[CheckResult] = []
@@ -61,7 +68,7 @@ def run_invariants(inv: Invoice, cfg: dict) -> list[CheckResult]:
     if inv.total is None or inv.subtotal is None:
         out.append(_r("LOW_CONFIDENCE_READ", False, "ask", {"field": "total/subtotal", "reason": "missing"}))
     else:
-        tax = inv.tax or Decimal("0")
+        tax = effective_tax(inv)
         expected = inv.subtotal + tax
         ok = abs(expected - inv.total) <= tol_total
         out.append(_r("ARITH_TOTAL", ok, "info" if ok else "block",
@@ -95,7 +102,7 @@ def run_invariants(inv: Invoice, cfg: dict) -> list[CheckResult]:
 
 
 def gst_split(inv: Invoice) -> list[CheckResult]:
-    tax = inv.tax or Decimal("0")
+    tax = effective_tax(inv)
     if tax == 0 and not any((inv.cgst, inv.sgst, inv.igst)):
         return [_r("ARITH_GST_SPLIT", True, "info", {"note": "no GST charged"})]
     if not inv.gstin or not inv.buyer_gstin:
